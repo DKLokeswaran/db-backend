@@ -2,9 +2,9 @@ spring:
   application:
     name: db-backend
   datasource:
-    url: url
-    username: username
-    password: password
+    url: ${DB_DATASOURCE_URL}
+    username: ${DB_DATASOURCE_USERNAME}
+    password: ${DB_DATASOURCE_PASSWORD}
 server:
   port: 8081
 
@@ -14,4 +14,3 @@ logging:
     org.springframework.jdbc.core: TRACE
     org.springframework.jdbc.datasource: DEBUG
     org.springframework.jdbc.core.StatementCreatorUtils: TRACE
-
