@@ -1,0 +1,28 @@
+@baseUrl = http://192.168.29.71:8081
+@userId = 6
+
+###
+
+# Get User
+GET {{baseUrl}}/api/users/{{userId}}
+
+###
+
+# List Users
+GET {{baseUrl}}/api/users
+
+###
+
+# Add User
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{"name":"kandasamy","mobileNo":"9994722907","addressLine":"tsr layout","locality":"tiruppur","state":"tn","country":"india","pincode":"641607"}
+
+###
+
+# Delete User
+DELETE {{baseUrl}}/api/users/{{userId}}
+
+###
+
