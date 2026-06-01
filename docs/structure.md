@@ -12,6 +12,7 @@ db-backend/
     DbBackendApplication.java      Boot entry point
     common/ApiResponseBuilder.java  Shared response-map helper
     controller/UserController.java  User CRUD endpoints
+    service/UserService.java        User CRUD service orchestration
     exception/GlobalExceptionHandler.java  Global validation and error advice
     model/                          Domain entities and enums
     repository/UserRepository.java  Spring Data repository
@@ -31,6 +32,7 @@ db-backend/
 ## Where to Add New Code
 
 - New controllers: `src/main/java/com/lokeswarandk/db_backend/controller`
+- New services: `src/main/java/com/lokeswarandk/db_backend/service`
 - New repositories: `src/main/java/com/lokeswarandk/db_backend/repository`
 - Shared helpers: `src/main/java/com/lokeswarandk/db_backend/common`
 - Error advice: `src/main/java/com/lokeswarandk/db_backend/exception`

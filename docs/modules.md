@@ -14,6 +14,12 @@
 | --- | --- | --- | --- |
 | `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `updateUser`, `deleteUser` | CRUD endpoints under `/api/users`. |
 
+### Service Layer
+
+| Path | Type | Public surface | Notes |
+| --- | --- | --- | --- |
+| `src/main/java/com/lokeswarandk/db_backend/service/UserService.java` | Spring service | `create`, `findById`, `findAll`, `update`, `deleteById` | Encapsulates user CRUD business flow and repository access. |
+
 ### Shared Utilities
 
 | Path | Type | Public surface | Notes |
@@ -68,13 +74,25 @@
 - Package: `com.lokeswarandk.db_backend.controller`
 - Class type: REST controller
 - Annotation: `@RestController`, `@RequestMapping("/api/users")`
-- Injected dependency: `UserRepository`
+- Injected dependency: `UserService`
 - Public methods:
-  - `addUser(User user)`: POST create flow; clears incoming id and fills `createdAt` when absent
+  - `addUser(User user)`: POST create flow delegated to service
   - `getUser(Long id)`: GET by id; returns 404 when missing
   - `listUsers()`: GET all users
-  - `updateUser(Long id, User updatedUser)`: PUT replace flow; returns 404 when missing
+  - `updateUser(Long id, User updatedUser)`: PUT replace flow delegated to service; returns 404 when missing
   - `deleteUser(Long id)`: DELETE by id; returns 404 when missing
+
+### `UserService`
+
+- Package: `com.lokeswarandk.db_backend.service`
+- Class type: Spring `@Service`
+- Injected dependency: `UserRepository`
+- Public methods:
+  - `create(User user)`: create flow; clears incoming id and fills `createdAt` when absent
+  - `findById(Long id)`: fetch one user
+  - `findAll()`: list all users
+  - `update(Long id, User updatedUser)`: replace flow; returns empty when user does not exist
+  - `deleteById(Long id)`: delete flow; returns false when user does not exist
 
 ### `ApiResponseBuilder`
 
@@ -170,4 +188,4 @@
 
 ## Public API Notes
 
-The repository has no service classes, DTO classes, mapper classes, or custom exceptions in committed history. The controller operates directly on entity objects.
+The repository now includes a service class for user flows. There are still no DTO classes, mapper classes, or custom exceptions in committed history. The controller still operates on entity objects at the API boundary.

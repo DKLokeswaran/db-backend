@@ -5,6 +5,7 @@
 The committed backend is a small layered monolith:
 
 - Web layer: `UserController`
+- Service layer: `UserService`
 - Shared response helpers: `ApiResponseBuilder`
 - Error boundary: `GlobalExceptionHandler`
 - Persistence abstraction: `UserRepository`
@@ -15,9 +16,10 @@ Request flow in HEAD is:
 
 1. HTTP request reaches `UserController`.
 2. Bean Validation runs on request bodies annotated with `@Valid`.
-3. The controller calls `UserRepository`.
-4. Spring Data JDBC persists or fetches entities from PostgreSQL.
-5. Errors are shaped by `ApiResponseBuilder` and `GlobalExceptionHandler`.
+3. The controller delegates CRUD logic to `UserService`.
+4. `UserService` calls `UserRepository` for persistence operations.
+5. Spring Data JDBC persists or fetches entities from PostgreSQL.
+6. Errors are shaped by `ApiResponseBuilder` and `GlobalExceptionHandler`.
 
 ## Layer Diagram
 
@@ -25,6 +27,9 @@ Request flow in HEAD is:
 flowchart TB
   subgraph Web
     UC[UserController]
+  end
+  subgraph Service
+    US[UserService]
   end
   subgraph Common
     ARB[ApiResponseBuilder]
@@ -42,7 +47,8 @@ flowchart TB
     TI[TransactionItem]
     PM[PaymentMode]
   end
-  UC --> UR
+  UC --> US
+  US --> UR
   UC --> ARB
   GEH --> ARB
   UR --> U
@@ -53,15 +59,16 @@ flowchart TB
 ## Design Patterns
 
 - Repository pattern: `UserRepository` extends `CrudRepository<User, Long>`.
+- Service layer pattern: `UserService` encapsulates user CRUD business flow over repository calls.
 - Utility class pattern: `ApiResponseBuilder` has a private constructor and only static methods.
 - Controller advice: `GlobalExceptionHandler` centralizes validation and generic exception handling.
-- Constructor injection: `UserController` receives `UserRepository` through its constructor.
+- Constructor injection: `UserController` receives `UserService` through its constructor.
 - Aggregate reference modeling: `Receipt`, `Transaction`, and `TransactionItem` use `AggregateReference` to point at other tables.
 - Enum-based domain classification: `OfferingCategory` and `PricingType` encode allowed values.
 
 ## Inversion of Control
 
-The code relies on Spring Boot auto-configuration and dependency injection. There is no custom DI container, no manual service locator, and no explicit `@Service` layer in committed history.
+The code relies on Spring Boot auto-configuration and dependency injection. There is no custom DI container and no manual service locator.
 
 ## Cross-Cutting Concerns
 
@@ -72,7 +79,7 @@ The code relies on Spring Boot auto-configuration and dependency injection. Ther
 
 ## Backend Deep Dive
 
-The backend has no separate service layer. `UserController` performs create/read/update/delete logic directly against the repository. That makes the request lifecycle short and easy to follow, but it also means business rules are concentrated in the controller rather than split into services.
+The backend now uses a dedicated service layer for user CRUD. `UserController` handles HTTP concerns and delegates create/read/update/delete behavior to `UserService`, while persistence remains in `UserRepository`. This keeps transport logic and business/data-access orchestration separated.
 
 There are no scheduled jobs, async message consumers, or event publishers in committed history.
 

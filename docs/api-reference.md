@@ -55,8 +55,9 @@ Request body example:
 Behavior:
 
 - Request body is validated with `@Valid`.
-- Incoming `id` is nulled before save.
-- `createdAt` is set to `LocalDateTime.now()` when missing.
+- `UserController` delegates create logic to `UserService`.
+- In the service, incoming `id` is nulled before save.
+- In the service, `createdAt` is set to `LocalDateTime.now()` when missing.
 - Response is the saved entity.
 
 Responses:
@@ -108,8 +109,8 @@ Request body shape: same as create user.
 Behavior:
 
 - Body is validated with `@Valid`.
-- Existing user must exist or the controller returns 404.
-- Path id wins over any body id because `updatedUser.setId(id)` is called before save.
+- Existing user must exist or the endpoint returns 404.
+- Path id wins over any body id because the service applies `updatedUser.setId(id)` before save.
 - Response is the saved entity.
 
 Responses:
@@ -125,7 +126,7 @@ Responses:
 
 Behavior:
 
-- Existence is checked with `existsById` before deletion.
+- Existence is checked in `UserService.deleteById` before deletion.
 - Successful deletes return a simple message payload.
 
 Success response shape:
