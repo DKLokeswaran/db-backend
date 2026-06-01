@@ -1,0 +1,56 @@
+# Dependencies
+
+## Build Coordinates
+
+- Parent: `org.springframework.boot:spring-boot-starter-parent:4.0.6`
+- Java version: `17`
+- Artifact: `com.lokeswarandk:db-backend:0.0.1-SNAPSHOT`
+
+## Direct Dependencies
+
+| Dependency | Version | Scope | Category | Purpose | Security-sensitive |
+| --- | --- | --- | --- | --- | --- |
+| `org.springframework.boot:spring-boot-starter` | managed by parent | compile | application bootstrap | core Spring Boot runtime | no |
+| `org.springframework.boot:spring-boot-starter-data-jdbc` | managed by parent | compile | database/ORM | Spring Data JDBC persistence | yes, data access |
+| `org.springframework.boot:spring-boot-starter-validation` | managed by parent | compile | validation | Jakarta Bean Validation support | yes, input validation |
+| `org.springframework.boot:spring-boot-starter-web` | managed by parent | compile | HTTP/networking | REST controller support and embedded web server | yes, HTTP exposure |
+| `org.postgresql:postgresql` | managed by parent or transitive version resolution in build | compile | database driver | PostgreSQL JDBC driver | yes |
+| `org.springframework.boot:spring-boot-starter-test` | managed by parent | test | testing | Spring Boot test support | no |
+
+## Notable Transitive Bundles
+
+The build manifest does not pin transitive versions directly, but the starter dependencies imply these notable package groups:
+
+- `spring-boot-starter-data-jdbc`: Spring Data JDBC, Spring Data Relational, JDBC support, transaction support
+- `spring-boot-starter-validation`: Jakarta Validation API, Hibernate Validator
+- `spring-boot-starter-web`: Spring MVC, embedded Tomcat, Jackson JSON support
+- `spring-boot-starter-test`: JUnit Jupiter, Spring Test, Mockito, AssertJ, Hamcrest
+
+## Build Plugins
+
+| Plugin | Purpose |
+| --- | --- |
+| `spring-boot-maven-plugin` | package/run Spring Boot application |
+
+## Dependency Categories
+
+- UI framework: not found in backend history
+- State management: not found in backend history
+- Routing: Spring MVC request mapping
+- HTTP/networking: Spring Web, embedded server, PostgreSQL JDBC
+- Database/ORM: Spring Data JDBC, PostgreSQL driver
+- Testing: Spring Boot Starter Test, JUnit 5
+- Build tooling: Maven Wrapper, Spring Boot Maven Plugin
+- Linting/formatting: not found in backend history
+- Utilities: validation, response shaping helper
+
+## Security-Sensitive Packages
+
+- `org.postgresql:postgresql`
+- `org.springframework.boot:spring-boot-starter-web`
+- `org.springframework.boot:spring-boot-starter-validation`
+- `org.springframework.boot:spring-boot-starter-data-jdbc`
+
+## Notes
+
+The committed manifest is small enough that the dependency inventory is dominated by Spring Boot starter bundles rather than many direct third-party libraries.
