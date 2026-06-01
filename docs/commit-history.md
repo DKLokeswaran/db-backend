@@ -4,7 +4,7 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 9 |
+| Total commits | 10 |
 | First commit date | 2026-05-12 |
 | Latest commit date | 2026-06-01 |
 | Active contributors | 1 |
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 1 |
+| 2026-06 | 2 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -35,7 +35,9 @@ Top changed files by commit frequency in HEAD history:
 | `api-testing/User/AddUser.yml` | 2 |
 | `.gitignore` | 2 |
 | `src/test/java/com/lokeswarandk/db_backend/DbBackendApplicationTests.java` | 1 |
-| `src/main/java/com/lokeswarandk/db_backend/repository/UserRepository.java` | 1 |
+| `src/main/java/com/lokeswarandk/db_backend/repository/UserRepository.java` | 2 |
+| `src/main/java/com/lokeswarandk/db_backend/service/UserService.java` | 1 |
+| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | 2 |
 | `src/main/java/com/lokeswarandk/db_backend/model/User.java` | 1 |
 | `src/main/java/com/lokeswarandk/db_backend/model/TransactionItem.java` | 1 |
 | `src/main/java/com/lokeswarandk/db_backend/model/Transaction.java` | 1 |
@@ -74,6 +76,10 @@ Top changed files by commit frequency in HEAD history:
 
 - Added project documentation set under `docs/`.
 
+### 2026-06-01: user service layer extraction
+
+- Introduced `UserService` and refactored `UserController` to delegate CRUD orchestration to the service layer.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
@@ -82,6 +88,7 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `0ac3c4c` | Lokeswaran DK | 2026-06-01 | seperated controller and service logic for users |
 | `01c1674` | Lokeswaran DK | 2026-06-01 | docs init |
 | `2419634` | Lokeswaran DK | 2026-05-31 | moved secrets to env file and added a script for local execution |
 | `d7cd238` | Lokeswaran DK | 2026-05-31 | added http files for api testing and removed bruno files |
@@ -96,4 +103,4 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `01c167429141714e0f9c150a9c700d85fa7427a3`
+Last Synced Commit: `0ac3c4c93308b178ab50e067917a014e826606dc`

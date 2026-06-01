@@ -6,7 +6,7 @@ The committed backend is a small layered monolith:
 
 - Web layer: `UserController`
 - Service layer: `UserService`
-- Shared response helpers: `ApiResponseBuilder`
+- Shared utilities: `ApiResponseBuilder`, `StringUtils`
 - Error boundary: `GlobalExceptionHandler`
 - Persistence abstraction: `UserRepository`
 - Domain model: Spring Data JDBC entities under `model`
@@ -33,6 +33,7 @@ flowchart TB
   end
   subgraph Common
     ARB[ApiResponseBuilder]
+    SU[StringUtils]
     GEH[GlobalExceptionHandler]
   end
   subgraph Persistence
@@ -48,6 +49,7 @@ flowchart TB
     PM[PaymentMode]
   end
   UC --> US
+  US --> SU
   US --> UR
   UC --> ARB
   GEH --> ARB
@@ -61,7 +63,8 @@ flowchart TB
 - Repository pattern: `UserRepository` extends `CrudRepository<User, Long>`.
 - Service layer pattern: `UserService` encapsulates user CRUD business flow over repository calls.
 - Utility class pattern: `ApiResponseBuilder` has a private constructor and only static methods.
-- Controller advice: `GlobalExceptionHandler` centralizes validation and generic exception handling.
+- Controller advice: `GlobalExceptionHandler` centralizes bad-request, validation, and generic exception handling.
+- Shared string validation: `StringUtils.requireNonBlank` normalizes query parameters in `UserService`.
 - Constructor injection: `UserController` receives `UserService` through its constructor.
 - Aggregate reference modeling: `Receipt`, `Transaction`, and `TransactionItem` use `AggregateReference` to point at other tables.
 - Enum-based domain classification: `OfferingCategory` and `PricingType` encode allowed values.
@@ -79,7 +82,7 @@ The code relies on Spring Boot auto-configuration and dependency injection. Ther
 
 ## Backend Deep Dive
 
-The backend now uses a dedicated service layer for user CRUD. `UserController` handles HTTP concerns and delegates create/read/update/delete behavior to `UserService`, while persistence remains in `UserRepository`. This keeps transport logic and business/data-access orchestration separated.
+The backend uses a dedicated service layer for user flows. `UserController` handles HTTP concerns and delegates CRUD plus mobile search/filter behavior to `UserService`, while persistence remains in `UserRepository`. Mobile typeahead uses a dedicated prefix search endpoint that returns distinct mobile numbers; exact-mobile lookup returns full `User` entities for disambiguation when multiple users share a number.
 
 There are no scheduled jobs, async message consumers, or event publishers in committed history.
 

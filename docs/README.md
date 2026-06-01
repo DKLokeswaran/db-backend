@@ -31,7 +31,9 @@ Run the committed smoke test with:
 ```mermaid
 flowchart LR
   Client[HTTP client] --> Controller[UserController]
-  Controller --> Repo[UserRepository]
+  Controller --> Service[UserService]
+  Service --> Repo[UserRepository]
+  Service --> StringUtils[StringUtils]
   Controller --> Util[ApiResponseBuilder]
   Controller --> EH[GlobalExceptionHandler]
   Repo --> DB[(PostgreSQL)]

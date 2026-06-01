@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
@@ -37,6 +38,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
 
+    @GetMapping("/search/mobile")
+    public ResponseEntity<Object> searchMobileByPrefix(
+            @RequestParam String prefix,
+            @RequestParam(required = false) Integer limit) {
+        return ResponseEntity.ok(userService.searchMobileNosByPrefix(prefix, limit));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Object> getUser(@PathVariable Long id) {
         return userService.findById(id)
@@ -46,7 +54,10 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> listUsers() {
+    public ResponseEntity<Object> listUsers(@RequestParam(required = false) String mobile) {
+        if (mobile != null && !mobile.isBlank()) {
+            return ResponseEntity.ok(userService.findByMobileNo(mobile));
+        }
         return ResponseEntity.ok(userService.findAll());
     }
 

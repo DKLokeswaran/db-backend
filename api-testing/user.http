@@ -1,5 +1,7 @@
 @baseUrl = http://192.168.29.71:8081
 @userId = 6
+@mobileNo = 9994722907
+@mobilePrefix = 99
 
 ###
 
@@ -10,6 +12,41 @@ GET {{baseUrl}}/api/users/{{userId}}
 
 # List Users
 GET {{baseUrl}}/api/users
+
+###
+
+# List Users by mobile (full User objects)
+GET {{baseUrl}}/api/users?mobile={{mobileNo}}
+
+###
+
+# Search distinct mobile numbers by prefix (default limit 5)
+GET {{baseUrl}}/api/users/search/mobile?prefix={{mobilePrefix}}
+
+###
+
+# Search distinct mobile numbers by prefix with custom limit
+GET {{baseUrl}}/api/users/search/mobile?prefix={{mobilePrefix}}&limit=3
+
+###
+
+# Search with max limit cap (limit above 10 returns at most 10)
+GET {{baseUrl}}/api/users/search/mobile?prefix={{mobilePrefix}}&limit=20
+
+###
+
+# Search with prefix too short (expect 400)
+GET {{baseUrl}}/api/users/search/mobile?prefix=9
+
+###
+
+# Search with missing prefix (expect 400)
+GET {{baseUrl}}/api/users/search/mobile
+
+###
+
+# List by mobile with no matches (expect 200 and empty array)
+GET {{baseUrl}}/api/users?mobile=0000000000
 
 ###
 
@@ -25,4 +62,3 @@ Content-Type: application/json
 DELETE {{baseUrl}}/api/users/{{userId}}
 
 ###
-

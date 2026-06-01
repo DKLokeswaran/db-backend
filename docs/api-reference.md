@@ -10,7 +10,8 @@ The committed REST surface contains one resource group: `/api/users`.
 | --- | --- | --- | --- | --- |
 | `POST` | `/api/users` | Create a user | `201 Created` | `400`, `500` |
 | `GET` | `/api/users/{id}` | Fetch one user | `200 OK` | `404`, `500` |
-| `GET` | `/api/users` | List users | `200 OK` | `500` |
+| `GET` | `/api/users` | List all users, or filter by mobile | `200 OK` | `400`, `500` |
+| `GET` | `/api/users/search/mobile` | Distinct mobile prefix search (typeahead) | `200 OK` | `400`, `500` |
 | `PUT` | `/api/users/{id}` | Replace a user | `200 OK` | `400`, `404`, `500` |
 | `DELETE` | `/api/users/{id}` | Delete a user | `200 OK` | `404`, `500` |
 
@@ -95,10 +96,67 @@ Responses:
 
 `GET /api/users`
 
+Without query parameters, returns every user.
+
+### List Users by Mobile
+
+`GET /api/users?mobile={mobileNo}`
+
+Query parameter:
+
+- `mobile`: exact mobile number (trimmed in `UserService`; required when filtering)
+
+Behavior:
+
+- Delegates to `UserService.findByMobileNo`.
+- Returns all `User` rows with that mobile number (mobile is not unique in the domain).
+- Returns an empty array when no users match.
+
 Responses:
 
-- `200 OK` with an array of `User`
+- `200 OK` with an array of `User` (possibly empty)
+- `400 Bad Request` when `mobile` is missing or blank
 - `500 Internal Server Error` for unexpected exceptions
+
+## Search Mobile Numbers by Prefix
+
+`GET /api/users/search/mobile`
+
+Query parameters:
+
+| Parameter | Required | Default | Rules |
+| --- | --- | --- | --- |
+| `prefix` | yes | — | Trimmed; minimum length 2 |
+| `limit` | no | `5` | Minimum 1; capped at 10 |
+
+Behavior:
+
+- Delegates to `UserService.searchMobileNosByPrefix`.
+- Runs `SELECT DISTINCT mobile_no ... WHERE mobile_no LIKE prefix%` with the resolved limit.
+- Intended for typeahead UIs that suggest mobile numbers while typing.
+
+Success response: JSON array of strings, for example:
+
+```json
+["9994722907", "9994730123"]
+```
+
+Responses:
+
+- `200 OK` with a string array (possibly empty)
+- `400 Bad Request` when `prefix` is missing, blank, or shorter than 2 characters; when `limit` is less than 1; or when Spring rejects a missing required `prefix` parameter
+- `500 Internal Server Error` for unexpected exceptions
+
+400 response shape (service-thrown `IllegalArgumentException`):
+
+```json
+{
+  "timestamp": "2026-05-31T12:34:56.789",
+  "status": 400,
+  "error": "Bad request",
+  "message": "prefix must be at least 2 characters"
+}
+```
 
 ## Update User
 
@@ -144,6 +202,10 @@ Responses:
 - `200 OK` with the message payload
 - `404 Not Found` when the user does not exist
 - `500 Internal Server Error` for unexpected exceptions
+
+## Bad Request Error Shape
+
+Invalid search or filter parameters thrown as `IllegalArgumentException` from `UserService` are handled by `GlobalExceptionHandler.handleIllegalArgumentException` and use the same envelope as other API errors, with `error` set to `Bad request` and `message` describing the validation failure.
 
 ## Validation Error Shape
 

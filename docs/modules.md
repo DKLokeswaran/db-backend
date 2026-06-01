@@ -12,31 +12,32 @@
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `updateUser`, `deleteUser` | CRUD endpoints under `/api/users`. |
+| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | CRUD and mobile search endpoints under `/api/users`. |
 
 ### Service Layer
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/service/UserService.java` | Spring service | `create`, `findById`, `findAll`, `update`, `deleteById` | Encapsulates user CRUD business flow and repository access. |
+| `src/main/java/com/lokeswarandk/db_backend/service/UserService.java` | Spring service | `create`, `findById`, `findAll`, `findByMobileNo`, `searchMobileNosByPrefix`, `update`, `deleteById` | Encapsulates user CRUD, mobile filter, and prefix search over the repository. |
 
 ### Shared Utilities
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
 | `src/main/java/com/lokeswarandk/db_backend/common/ApiResponseBuilder.java` | Utility class | `error`, `validationError`, `messagePayload` | Builds consistent response maps. |
+| `src/main/java/com/lokeswarandk/db_backend/common/StringUtils.java` | Utility class | `requireNonBlank` | Trims and validates non-blank request parameters; throws `IllegalArgumentException` when invalid. |
 
 ### Error Handling
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` | `handleValidationException`, `handleGenericException` | Centralizes validation and unexpected error responses. |
+| `src/main/java/com/lokeswarandk/db_backend/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` | `handleIllegalArgumentException`, `handleValidationException`, `handleGenericException` | Centralizes bad-request, validation, and unexpected error responses. |
 
 ### Persistence
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/repository/UserRepository.java` | Spring Data repository | inherited `CrudRepository` methods | Only repository committed in HEAD. |
+| `src/main/java/com/lokeswarandk/db_backend/repository/UserRepository.java` | Spring Data repository | `findDistinctMobileNosByPrefix`, `findByMobileNo`, inherited `CrudRepository` methods | CRUD plus mobile prefix and exact-mobile queries. |
 
 ### Domain Model
 
@@ -78,7 +79,8 @@
 - Public methods:
   - `addUser(User user)`: POST create flow delegated to service
   - `getUser(Long id)`: GET by id; returns 404 when missing
-  - `listUsers()`: GET all users
+  - `listUsers(String mobile)`: GET all users, or users matching `mobile` when the query param is present
+  - `searchMobileByPrefix(String prefix, Integer limit)`: GET distinct mobile numbers for typeahead
   - `updateUser(Long id, User updatedUser)`: PUT replace flow delegated to service; returns 404 when missing
   - `deleteUser(Long id)`: DELETE by id; returns 404 when missing
 
@@ -91,8 +93,18 @@
   - `create(User user)`: create flow; clears incoming id and fills `createdAt` when absent
   - `findById(Long id)`: fetch one user
   - `findAll()`: list all users
+  - `findByMobileNo(String mobileNo)`: exact mobile match; uses `StringUtils.requireNonBlank`
+  - `searchMobileNosByPrefix(String prefix, Integer limit)`: distinct prefix search with default limit 5 and max 10
   - `update(Long id, User updatedUser)`: replace flow; returns empty when user does not exist
   - `deleteById(Long id)`: delete flow; returns false when user does not exist
+- Constants: `MOBILE_PREFIX_MIN_LENGTH`, `MOBILE_SEARCH_DEFAULT_LIMIT`, `MOBILE_SEARCH_MAX_LIMIT`
+
+### `StringUtils`
+
+- Package: `com.lokeswarandk.db_backend.common`
+- Class type: utility
+- Public static methods:
+  - `requireNonBlank(String value, String paramName)`: trims input; throws `IllegalArgumentException` with `{paramName} is required` when null or blank
 
 ### `ApiResponseBuilder`
 
@@ -111,9 +123,10 @@
 - Class type: controller advice
 - Annotations: `@RestControllerAdvice`
 - Public methods:
+  - `handleIllegalArgumentException(IllegalArgumentException ex)`
   - `handleValidationException(MethodArgumentNotValidException ex)`
   - `handleGenericException(Exception ex)`
-- Purpose: convert validation failures and unexpected exceptions into API responses
+- Purpose: convert bad-request, validation, and unexpected exceptions into API responses
 
 ### `UserRepository`
 
@@ -121,7 +134,10 @@
 - Class type: repository interface
 - Annotation: `@Repository`
 - Extends: `CrudRepository<User, Long>`
-- Public surface: inherited CRUD methods only
+- Public methods:
+  - `findDistinctMobileNosByPrefix(String prefix, int limit)`: custom `@Query` for `DISTINCT mobile_no` with `LIKE prefix%`
+  - `findByMobileNo(String mobileNo)`: derived query for exact mobile match
+  - inherited CRUD methods from `CrudRepository`
 
 ### `User`
 
@@ -188,4 +204,4 @@
 
 ## Public API Notes
 
-The repository now includes a service class for user flows. There are still no DTO classes, mapper classes, or custom exceptions in committed history. The controller still operates on entity objects at the API boundary.
+The repository includes a service class for user flows and mobile search/filter helpers. There are still no DTO classes, mapper classes, or custom domain exceptions. The controller still operates on entity objects at the API boundary for CRUD and mobile-filter responses; prefix search returns a `List<String>`.

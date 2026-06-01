@@ -11,6 +11,7 @@ db-backend/
   src/main/java/com/lokeswarandk/db_backend/
     DbBackendApplication.java      Boot entry point
     common/ApiResponseBuilder.java  Shared response-map helper
+    common/StringUtils.java         Shared string validation helper
     controller/UserController.java  User CRUD endpoints
     service/UserService.java        User CRUD service orchestration
     exception/GlobalExceptionHandler.java  Global validation and error advice

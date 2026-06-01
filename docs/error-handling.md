@@ -17,6 +17,15 @@ The backend does not define custom exception classes in committed history. Error
 
 The `details` value is a field-name-to-message map.
 
+### Bad request failures from service validation
+
+`GlobalExceptionHandler.handleIllegalArgumentException` catches `IllegalArgumentException` (for example from `StringUtils.requireNonBlank` or `UserService` search rules) and returns:
+
+- `timestamp`
+- `status` (`400`)
+- `error` (`Bad request`)
+- `message` (exception message, such as `prefix is required` or `prefix must be at least 2 characters`)
+
 ### Unexpected failures
 
 `GlobalExceptionHandler.handleGenericException` catches any `Exception` and returns:
@@ -31,6 +40,10 @@ The error label used by the committed code is `Unexpected error`.
 ### Controller-level not found handling
 
 `UserController` handles missing user ids directly by returning a 404 response from `ApiResponseBuilder.error`.
+
+### Service-level parameter validation
+
+`UserService` validates mobile search inputs before repository calls. Blank `mobile` or `prefix` values and invalid `limit` or prefix length throw `IllegalArgumentException`, which is converted to `400 Bad Request` by the global handler.
 
 ## Validation Rules
 

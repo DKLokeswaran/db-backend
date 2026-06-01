@@ -22,17 +22,24 @@
 
 This committed REST Client file exercises manual HTTP calls against the user API.
 
-Requests present in HEAD:
+Requests present in the current workspace:
 
 - `GET /api/users/{userId}`
 - `GET /api/users`
+- `GET /api/users?mobile={mobileNo}`
+- `GET /api/users/search/mobile?prefix={mobilePrefix}` (with optional `limit`)
+- `GET /api/users/search/mobile?prefix=9` (expects `400` for short prefix)
+- `GET /api/users/search/mobile` (expects `400` for missing prefix)
+- `GET /api/users?mobile=0000000000` (expects `200` with empty array when no match)
 - `POST /api/users`
 - `DELETE /api/users/{userId}`
 
-The file defines two client variables:
+The file defines these client variables:
 
 - `baseUrl`
 - `userId`
+- `mobileNo`
+- `mobilePrefix`
 
 It does not include a committed `PUT` example in HEAD, even though the controller supports update.
 

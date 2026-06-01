@@ -15,6 +15,11 @@ import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, "Bad request", ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> validationErrors = new HashMap<>();

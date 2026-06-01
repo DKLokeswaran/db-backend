@@ -11,6 +11,7 @@
 ## File Organization
 
 - Controllers live under `controller`.
+- Services live under `service`.
 - Repositories live under `repository`.
 - Shared helpers live under `common`.
 - Error handlers live under `exception`.
@@ -53,4 +54,4 @@ Not found in committed history. The backend is entirely synchronous in its commi
 
 ## Practical Rule of Thumb
 
-To add new backend code in the same style, place HTTP handlers in `controller`, persistence interfaces in `repository`, and any shared response shaping in `common` rather than duplicating response-map construction in controllers.
+To add new backend code in the same style, place HTTP handlers in `controller`, business orchestration in `service`, persistence interfaces in `repository`, and shared helpers such as response shaping or string validation in `common` rather than duplicating that logic in controllers or services.

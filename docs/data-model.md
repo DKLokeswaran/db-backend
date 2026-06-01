@@ -106,8 +106,8 @@ Not found in committed history.
 ## ORM and Query Patterns
 
 - Spring Data JDBC is the persistence model.
-- `UserRepository` uses `CrudRepository` only; no custom queries are committed.
-- No JPQL, HQL, named queries, or raw SQL are present in HEAD.
+- `UserRepository` extends `CrudRepository` and adds `findDistinctMobileNosByPrefix` (custom SQL via `@Query`) and `findByMobileNo` (derived query).
+- Mobile numbers are not unique in the domain; multiple `User` rows may share the same `mobileNo`.
 - No explicit transaction boundaries are annotated in committed history.
 
 ## DTO Shapes
