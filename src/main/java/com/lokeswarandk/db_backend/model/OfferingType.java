@@ -1,21 +1,18 @@
 package com.lokeswarandk.db_backend.model;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Table("offering_type")
 public class OfferingType {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotBlank(message = "OfferingType name is required")
     private String name;
@@ -36,8 +33,7 @@ public class OfferingType {
     @NotNull(message = "Is active flag is required")
     private Boolean isActive;
 
-    @Nullable
-    private LocalDateTime createdAt;
+    @Nullable private LocalDateTime createdAt;
 
     public OfferingType() {
         // Required by Spring Data JDBC for object materialization.

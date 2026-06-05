@@ -1,34 +1,27 @@
 package com.lokeswarandk.db_backend.model;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Table("event")
 public class Event {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotBlank(message = "Event name is required")
     private String name;
 
-    @Nullable
-    private String description;
+    @Nullable private String description;
 
-    @Nullable
-    private LocalDate startDate;
+    @Nullable private LocalDate startDate;
 
-    @Nullable
-    private LocalDate endDate;
+    @Nullable private LocalDate endDate;
 
-    @Nullable
-    private LocalDateTime createdAt;
+    @Nullable private LocalDateTime createdAt;
 
     public Event() {
         // Required by Spring Data JDBC for object materialization.

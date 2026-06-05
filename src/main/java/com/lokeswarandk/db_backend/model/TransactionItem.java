@@ -1,19 +1,17 @@
 package com.lokeswarandk.db_backend.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.core.mapping.Table;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Table("transaction_item")
 public class TransactionItem {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotNull(message = "Transaction ID is required")
     private AggregateReference<Transaction, Long> transactionId;
@@ -25,8 +23,7 @@ public class TransactionItem {
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
 
-    @Nullable
-    private String unit;
+    @Nullable private String unit;
 
     public TransactionItem() {
         // Required by Spring Data JDBC for object materialization.

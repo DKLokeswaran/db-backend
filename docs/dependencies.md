@@ -28,9 +28,10 @@ The build manifest does not pin transitive versions directly, but the starter de
 
 ## Build Plugins
 
-| Plugin | Purpose |
-| --- | --- |
-| `spring-boot-maven-plugin` | package/run Spring Boot application |
+| Plugin | Version | Purpose |
+| --- | --- | --- |
+| `com.diffplug.spotless:spotless-maven-plugin` | `3.5.0` | Java and YAML formatting; `check` goal bound to `verify` |
+| `spring-boot-maven-plugin` | managed by parent | package/run Spring Boot application |
 
 ## Dependency Categories
 
@@ -40,8 +41,8 @@ The build manifest does not pin transitive versions directly, but the starter de
 - HTTP/networking: Spring Web, embedded server, PostgreSQL JDBC
 - Database/ORM: Spring Data JDBC, PostgreSQL driver
 - Testing: Spring Boot Starter Test, JUnit 5
-- Build tooling: Maven Wrapper, Spring Boot Maven Plugin
-- Linting/formatting: not found in backend history
+- Build tooling: Maven Wrapper, Spring Boot Maven Plugin, Spotless Maven Plugin
+- Linting/formatting: Spotless (Google Java Format AOSP), `.editorconfig`
 - Utilities: validation, response shaping helper
 
 ## Security-Sensitive Packages

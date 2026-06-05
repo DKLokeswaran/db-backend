@@ -6,6 +6,8 @@
 
 - `./mvnw spring-boot:run`: start the backend locally
 - `./mvnw test`: run the Spring Boot test suite
+- `./mvnw spotless:check`: verify Java and YAML formatting (also runs automatically on `verify`)
+- `./mvnw spotless:apply`: apply Spotless formatting fixes locally
 
 ### Local Run Script
 
@@ -18,8 +20,9 @@ The committed build is Maven-based:
 1. Maven Wrapper resolves the local Maven distribution.
 2. Spring Boot parent manages dependency versions.
 3. The application compiles as Java 17.
-4. Spring Boot Maven Plugin packages or runs the app.
-5. `spring-boot:run` starts the application without a separate container layer.
+4. Spotless Maven Plugin checks Java (Google Java Format, AOSP) and YAML formatting on `verify`.
+5. Spring Boot Maven Plugin packages or runs the app.
+6. `spring-boot:run` starts the application without a separate container layer.
 
 ## Runtime Configuration
 

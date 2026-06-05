@@ -1,15 +1,13 @@
 package com.lokeswarandk.db_backend.model;
 
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
-
-import jakarta.validation.constraints.NotBlank;
 
 @Table("payment_mode")
 public class PaymentMode {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotBlank(message = "PaymentMode name is required")
     private String name;

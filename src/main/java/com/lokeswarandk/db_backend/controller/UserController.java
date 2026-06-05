@@ -1,5 +1,9 @@
 package com.lokeswarandk.db_backend.controller;
 
+import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
+import com.lokeswarandk.db_backend.model.User;
+import com.lokeswarandk.db_backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,12 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
-import com.lokeswarandk.db_backend.model.User;
-import com.lokeswarandk.db_backend.service.UserService;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/users")
@@ -40,17 +38,21 @@ public class UserController {
 
     @GetMapping("/search/mobile")
     public ResponseEntity<Object> searchMobileByPrefix(
-            @RequestParam String prefix,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam String prefix, @RequestParam(required = false) Integer limit) {
         return ResponseEntity.ok(userService.searchMobileNosByPrefix(prefix, limit));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Object> getUser(@PathVariable Long id) {
-        return userService.findById(id)
+        return userService
+                .findById(id)
                 .map(user -> ResponseEntity.ok((Object) user))
-                .orElseGet(() -> ApiResponseBuilder.error(
-                        HttpStatus.NOT_FOUND, USER_NOT_FOUND, userNotFoundMessage(id)));
+                .orElseGet(
+                        () ->
+                                ApiResponseBuilder.error(
+                                        HttpStatus.NOT_FOUND,
+                                        USER_NOT_FOUND,
+                                        userNotFoundMessage(id)));
     }
 
     @GetMapping
@@ -62,19 +64,27 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> updateUser(@PathVariable Long id, @Valid @RequestBody User updatedUser) {
-        return userService.update(id, updatedUser)
+    public ResponseEntity<Object> updateUser(
+            @PathVariable Long id, @Valid @RequestBody User updatedUser) {
+        return userService
+                .update(id, updatedUser)
                 .map(user -> ResponseEntity.ok((Object) user))
-                .orElseGet(() -> ApiResponseBuilder.error(
-                        HttpStatus.NOT_FOUND, USER_NOT_FOUND, userNotFoundMessage(id)));
+                .orElseGet(
+                        () ->
+                                ApiResponseBuilder.error(
+                                        HttpStatus.NOT_FOUND,
+                                        USER_NOT_FOUND,
+                                        userNotFoundMessage(id)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteUser(@PathVariable Long id) {
         if (!userService.deleteById(id)) {
-            return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, USER_NOT_FOUND, userNotFoundMessage(id));
+            return ApiResponseBuilder.error(
+                    HttpStatus.NOT_FOUND, USER_NOT_FOUND, userNotFoundMessage(id));
         }
-        return ResponseEntity.ok(ApiResponseBuilder.messagePayload("User deleted successfully", "id", id));
+        return ResponseEntity.ok(
+                ApiResponseBuilder.messagePayload("User deleted successfully", "id", id));
     }
 
     private String userNotFoundMessage(Long id) {

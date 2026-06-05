@@ -4,9 +4,9 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 10 |
+| Total commits | 12 |
 | First commit date | 2026-05-12 |
-| Latest commit date | 2026-06-01 |
+| Latest commit date | 2026-06-05 |
 | Active contributors | 1 |
 | Most active contributor | Lokeswaran DK |
 
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 2 |
+| 2026-06 | 4 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -80,6 +80,16 @@ Top changed files by commit frequency in HEAD history:
 
 - Introduced `UserService` and refactored `UserController` to delegate CRUD orchestration to the service layer.
 
+### 2026-06-01: mobile search and filter APIs
+
+- Added `GET /api/users/search/mobile` for distinct mobile-number prefix typeahead.
+- Added `GET /api/users?mobile={mobileNo}` for exact-mobile user lookup.
+- Introduced `StringUtils.requireNonBlank` and extended `UserRepository` with prefix and exact-mobile queries.
+
+### 2026-06-05: Cursor IDE indexing exclusions
+
+- Added `.cursorignore` to exclude build artifacts and local secrets from Cursor indexing.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
@@ -88,6 +98,8 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `146cc63` | Lokeswaran DK | 2026-06-05 | added .cursorignore file |
+| `00f8842` | Lokeswaran DK | 2026-06-01 | added mobile no prefix api ans list users by mobile param |
 | `0ac3c4c` | Lokeswaran DK | 2026-06-01 | seperated controller and service logic for users |
 | `01c1674` | Lokeswaran DK | 2026-06-01 | docs init |
 | `2419634` | Lokeswaran DK | 2026-05-31 | moved secrets to env file and added a script for local execution |
@@ -103,4 +115,4 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `0ac3c4c93308b178ab50e067917a014e826606dc`
+Last Synced Commit: `146cc630df8a269b7db8d822dad2a1acb966b110`

@@ -1,18 +1,15 @@
 package com.lokeswarandk.db_backend.model;
 
-import java.time.LocalDateTime;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Table("user")
 public class User {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotBlank(message = "User name is required")
     private String name;
@@ -35,8 +32,7 @@ public class User {
     @NotBlank(message = "Pincode is required")
     private String pincode;
 
-    @Nullable
-    private LocalDateTime createdAt;
+    @Nullable private LocalDateTime createdAt;
 
     public User() {
         // Required by Spring Data JDBC for object materialization.

@@ -4,6 +4,8 @@
 
 ```text
 db-backend/
+  .editorconfig            Editor indentation and charset baseline
+  .cursorignore            Cursor IDE indexing exclusions
   pom.xml                  Maven build and dependency manifest
   mvnw, mvnw.cmd           Maven Wrapper launchers
   scripts/run-local.sh     Local boot script that loads .env and starts Spring Boot

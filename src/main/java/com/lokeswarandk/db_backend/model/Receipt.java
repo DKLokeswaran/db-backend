@@ -1,21 +1,18 @@
 package com.lokeswarandk.db_backend.model;
 
-import java.time.LocalDateTime;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.core.mapping.Table;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Table("receipt")
 public class Receipt {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotNull(message = "Event ID is required")
     private AggregateReference<Event, Long> eventId;
@@ -24,17 +21,14 @@ public class Receipt {
     @Min(value = 1, message = "Receipt number must be positive")
     private Integer receiptNo;
 
-    @Nullable
-    private AggregateReference<User, Long> userId;
+    @Nullable private AggregateReference<User, Long> userId;
 
     @NotBlank(message = "Display name is required")
     private String displayName;
 
-    @Nullable
-    private String displayLocality;
+    @Nullable private String displayLocality;
 
-    @Nullable
-    private LocalDateTime createdAt;
+    @Nullable private LocalDateTime createdAt;
 
     public Receipt() {
         // Required by Spring Data JDBC for object materialization.

@@ -1,16 +1,14 @@
 package com.lokeswarandk.db_backend.exception;
 
+import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,6 +29,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGenericException(Exception ex) {
-        return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", ex.getMessage());
+        return ApiResponseBuilder.error(
+                HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", ex.getMessage());
     }
 }

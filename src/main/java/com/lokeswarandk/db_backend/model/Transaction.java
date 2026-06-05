@@ -1,22 +1,19 @@
 package com.lokeswarandk.db_backend.model;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.core.mapping.Table;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Table("transaction")
 public class Transaction {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @NotNull(message = "Receipt ID is required")
     private AggregateReference<Receipt, Long> receiptId;
@@ -24,8 +21,7 @@ public class Transaction {
     @NotNull(message = "Offering type ID is required")
     private AggregateReference<OfferingType, Long> offeringTypeId;
 
-    @Nullable
-    private AggregateReference<PaymentMode, Long> paymentModeId;
+    @Nullable private AggregateReference<PaymentMode, Long> paymentModeId;
 
     @NotNull(message = "Quantity is required")
     @Min(value = 1, message = "Quantity must be at least 1")
@@ -35,11 +31,9 @@ public class Transaction {
     @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be greater than 0")
     private BigDecimal amount;
 
-    @Nullable
-    private String notes;
+    @Nullable private String notes;
 
-    @Nullable
-    private LocalDateTime createdAt;
+    @Nullable private LocalDateTime createdAt;
 
     public Transaction() {
         // Required by Spring Data JDBC for object materialization.

@@ -1,15 +1,13 @@
 package com.lokeswarandk.db_backend.service;
 
+import com.lokeswarandk.db_backend.common.StringUtils;
+import com.lokeswarandk.db_backend.model.User;
+import com.lokeswarandk.db_backend.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Service;
-
-import com.lokeswarandk.db_backend.common.StringUtils;
-import com.lokeswarandk.db_backend.model.User;
-import com.lokeswarandk.db_backend.repository.UserRepository;
 
 @Service
 public class UserService {

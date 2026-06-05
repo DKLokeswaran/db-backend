@@ -22,7 +22,7 @@ There are no barrel files or re-export aggregators in committed history.
 
 ## Code Structure
 
-- Imports are grouped loosely by standard library, project, and Spring/Jakarta imports, but there is no formatter or import-order tool committed in HEAD.
+- Imports are ordered and cleaned by Spotless (`removeUnusedImports`) with Google Java Format (AOSP style).
 - Public methods appear before private helpers in the controller and utility classes.
 - Utility classes use a private constructor and static methods.
 - Controllers return `ResponseEntity<Object>` rather than custom wrapper DTOs.
@@ -40,11 +40,14 @@ Not found in committed history. The backend is entirely synchronous in its commi
 
 ## Formatting
 
-- Indentation: 4 spaces in Java and shell scripts
+- Editor baseline: `.editorconfig` sets UTF-8, LF line endings, final newline, and trailing-whitespace trimming for all files.
+- Java, XML, YAML, properties, and shell: 4-space indentation (`indent_style = space`, `indent_size = 4`).
+- Java formatting: Spotless Maven plugin applies Google Java Format (AOSP style) to `src/main/java` and `src/test/java`.
+- YAML resources: Spotless trims trailing whitespace and enforces a final newline.
 - Quotes: double quotes in Java and shell scripts where string literals are needed
 - Semicolons: used in Java, not applicable in shell
 - Trailing commas: not used in Java
-- Line length: no committed formatter config was found, so no explicit hard limit is documented in HEAD
+- Enforcement: `./mvnw spotless:check` runs on the `verify` phase; use `./mvnw spotless:apply` to fix formatting locally before commit.
 
 ## Validation and Error Style
 
