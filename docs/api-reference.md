@@ -222,6 +222,19 @@ Validation failures are converted to a standard envelope by `GlobalExceptionHand
 }
 ```
 
+## Unexpected Error Shape
+
+Uncaught exceptions are handled by `GlobalExceptionHandler.handleGenericException`. The client receives a fixed message; internal details are logged server-side only.
+
+```json
+{
+  "timestamp": "2026-05-31T12:34:56.789",
+  "status": 500,
+  "error": "Unexpected error",
+  "message": "An unexpected error occurred"
+}
+```
+
 ## Auth and Permissions
 
 Not found in committed history. The exposed endpoints do not have auth annotations, guards, or middleware in HEAD.

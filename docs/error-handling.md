@@ -2,7 +2,7 @@
 
 ## Error Model
 
-The backend does not define custom exception classes in committed history. Error handling is concentrated in `GlobalExceptionHandler` and `ApiResponseBuilder`.
+Error handling is concentrated in `GlobalExceptionHandler` and `ApiResponseBuilder`. The workspace adds `ResourceNotFoundException` as the first domain-specific runtime exception for missing resources.
 
 ## Handling Boundaries
 
@@ -26,20 +26,33 @@ The `details` value is a field-name-to-message map.
 - `error` (`Bad request`)
 - `message` (exception message, such as `prefix is required` or `prefix must be at least 2 characters`)
 
-### Unexpected failures
+### Not found failures
 
-`GlobalExceptionHandler.handleGenericException` catches any `Exception` and returns:
+`GlobalExceptionHandler.handleResourceNotFoundException` catches `ResourceNotFoundException` and returns:
 
 - `timestamp`
-- `status`
-- `error`
-- `message`
+- `status` (`404`)
+- `error` (from `ex.getError()`, for example `User not found`)
+- `message` (from `ex.getMessage()`, for example `No user with id 6 exists`)
 
-The error label used by the committed code is `Unexpected error`.
+`ResourceNotFoundException` carries separate `error` and `message` fields. Use `ResourceNotFoundException.forResourceWithId(String resourceName, Object id)` to build the standard `{Resource} not found` / `No {resource} with id {id} exists` pair.
 
-### Controller-level not found handling
+The handler is registered in the workspace, but `UserController` still returns 404 inline via `ApiResponseBuilder.error` for missing users. Services are expected to throw `ResourceNotFoundException` as controllers are thinned in later refactors.
 
-`UserController` handles missing user ids directly by returning a 404 response from `ApiResponseBuilder.error`.
+### Unexpected failures
+
+`GlobalExceptionHandler.handleGenericException` catches any remaining `Exception` and returns:
+
+- `timestamp`
+- `status` (`500`)
+- `error` (`Unexpected error`)
+- `message` (`An unexpected error occurred`)
+
+The handler logs the full stack trace at ERROR but does not expose the underlying exception message to clients.
+
+### Controller-level not found handling (current)
+
+`UserController` still handles missing user ids directly by returning a 404 response from `ApiResponseBuilder.error`. This matches the `ResourceNotFoundException` envelope shape but bypasses the new handler until the User module is refactored.
 
 ### Service-level parameter validation
 
@@ -99,13 +112,24 @@ The validation library in use is Jakarta Bean Validation. Current committed cons
   "timestamp": "2026-05-31T12:34:56.789",
   "status": 500,
   "error": "Unexpected error",
-  "message": "..."
+  "message": "An unexpected error occurred"
 }
 ```
 
+## Logging Policy
+
+`GlobalExceptionHandler` uses SLF4J:
+
+| Exception type | Log level | Client exposure |
+| --- | --- | --- |
+| `ResourceNotFoundException` | WARN (message only) | Full `error` + `message` envelope |
+| `IllegalArgumentException` | WARN (message only) | Exception message |
+| `MethodArgumentNotValidException` | DEBUG (field map) | Validation `details` map |
+| Uncaught `Exception` | ERROR (stack trace) | Generic `An unexpected error occurred` |
+
 ## Notable Gaps
 
-- No domain-specific exception hierarchy
+- `ResourceNotFoundException` exists but is not yet thrown from `UserService` or `UserController`
+- No broader domain exception hierarchy beyond not-found
 - No per-controller `try/catch` blocks beyond existence checks
-- No explicit logging policy around exceptions
-- No error code enum or catalog in committed history
+- No error code enum or catalog

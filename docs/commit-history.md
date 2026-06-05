@@ -4,7 +4,7 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 12 |
+| Total commits | 13 |
 | First commit date | 2026-05-12 |
 | Latest commit date | 2026-06-05 |
 | Active contributors | 1 |
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 4 |
+| 2026-06 | 5 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -90,6 +90,11 @@ Top changed files by commit frequency in HEAD history:
 
 - Added `.cursorignore` to exclude build artifacts and local secrets from Cursor indexing.
 
+### 2026-06-05: formatting enforcement baseline
+
+- Added `.editorconfig` and Spotless Maven plugin (Google Java Format, AOSP style).
+- Normalized Java and YAML formatting across the codebase; bound `spotless:check` to the `verify` phase.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
@@ -98,6 +103,7 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `fe80a08` | Lokeswaran DK | 2026-06-05 | aadded maven spotless plugin,.editorconfig, ran spotless apply and added plan for codebase standardisation |
 | `146cc63` | Lokeswaran DK | 2026-06-05 | added .cursorignore file |
 | `00f8842` | Lokeswaran DK | 2026-06-01 | added mobile no prefix api ans list users by mobile param |
 | `0ac3c4c` | Lokeswaran DK | 2026-06-01 | seperated controller and service logic for users |
@@ -115,4 +121,4 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `146cc630df8a269b7db8d822dad2a1acb966b110`
+Last Synced Commit: `fe80a086dc3a63585e938324a296af1d05694421`

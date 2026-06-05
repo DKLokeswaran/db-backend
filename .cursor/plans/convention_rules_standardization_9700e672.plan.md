@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: infra-patterns
     content: Add ResourceNotFoundException; improve GlobalExceptionHandler (SLF4J logging + safe 500 messages)
-    status: pending
+    status: completed
   - id: dto-user
     content: Create dto/, mapper/ packages; refactor User module as DTO reference implementation
     status: pending

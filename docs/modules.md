@@ -31,7 +31,8 @@
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` | `handleIllegalArgumentException`, `handleValidationException`, `handleGenericException` | Centralizes bad-request, validation, and unexpected error responses. |
+| `src/main/java/com/lokeswarandk/db_backend/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` | `handleResourceNotFoundException`, `handleIllegalArgumentException`, `handleValidationException`, `handleGenericException` | Centralizes not-found, bad-request, validation, and unexpected error responses with SLF4J logging. |
+| `src/main/java/com/lokeswarandk/db_backend/exception/ResourceNotFoundException.java` | Runtime exception | `ResourceNotFoundException`, `getError`, `forResourceWithId` | Domain not-found signal for services; maps to 404 via the global handler. |
 
 ### Persistence
 
@@ -122,11 +123,24 @@
 - Package: `com.lokeswarandk.db_backend.exception`
 - Class type: controller advice
 - Annotations: `@RestControllerAdvice`
+- Logging: SLF4J `Logger` at WARN for client errors, DEBUG for validation, ERROR with stack trace for uncaught exceptions
 - Public methods:
+  - `handleResourceNotFoundException(ResourceNotFoundException ex)`
   - `handleIllegalArgumentException(IllegalArgumentException ex)`
   - `handleValidationException(MethodArgumentNotValidException ex)`
   - `handleGenericException(Exception ex)`
-- Purpose: convert bad-request, validation, and unexpected exceptions into API responses
+- Purpose: convert not-found, bad-request, validation, and unexpected exceptions into API responses; return a generic message for 500 responses
+
+### `ResourceNotFoundException`
+
+- Package: `com.lokeswarandk.db_backend.exception`
+- Class type: unchecked domain exception
+- Fields: `error` (response label), `message` (detail text, also the `RuntimeException` message)
+- Public methods:
+  - `ResourceNotFoundException(String error, String message)`
+  - `getError()`
+  - `forResourceWithId(String resourceName, Object id)`: factory for `{Resource} not found` / `No {resource} with id {id} exists`
+- Purpose: let services signal missing entities without building HTTP responses directly
 
 ### `UserRepository`
 
@@ -204,4 +218,4 @@
 
 ## Public API Notes
 
-The repository includes a service class for user flows and mobile search/filter helpers. There are still no DTO classes, mapper classes, or custom domain exceptions. The controller still operates on entity objects at the API boundary for CRUD and mobile-filter responses; prefix search returns a `List<String>`.
+The repository includes a service class for user flows and mobile search/filter helpers. `ResourceNotFoundException` is available for not-found flows, but `UserController` still builds 404 responses inline. There are still no DTO classes or mapper classes. The controller still operates on entity objects at the API boundary for CRUD and mobile-filter responses; prefix search returns a `List<String>`.

@@ -17,6 +17,7 @@ db-backend/
     controller/UserController.java  User CRUD endpoints
     service/UserService.java        User CRUD service orchestration
     exception/GlobalExceptionHandler.java  Global validation and error advice
+    exception/ResourceNotFoundException.java  Domain not-found runtime exception
     model/                          Domain entities and enums
     repository/UserRepository.java  Spring Data repository
   src/main/resources/application.yml  Datasource and server configuration

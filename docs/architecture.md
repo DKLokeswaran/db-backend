@@ -63,7 +63,8 @@ flowchart TB
 - Repository pattern: `UserRepository` extends `CrudRepository<User, Long>`.
 - Service layer pattern: `UserService` encapsulates user CRUD business flow over repository calls.
 - Utility class pattern: `ApiResponseBuilder` has a private constructor and only static methods.
-- Controller advice: `GlobalExceptionHandler` centralizes bad-request, validation, and generic exception handling.
+- Controller advice: `GlobalExceptionHandler` centralizes not-found, bad-request, validation, and generic exception handling.
+- Domain not-found exception: `ResourceNotFoundException` with `forResourceWithId` factory for service-layer 404 signaling.
 - Shared string validation: `StringUtils.requireNonBlank` normalizes query parameters in `UserService`.
 - Constructor injection: `UserController` receives `UserService` through its constructor.
 - Aggregate reference modeling: `Receipt`, `Transaction`, and `TransactionItem` use `AggregateReference` to point at other tables.
@@ -76,8 +77,8 @@ The code relies on Spring Boot auto-configuration and dependency injection. Ther
 ## Cross-Cutting Concerns
 
 - Validation is handled with Jakarta Bean Validation annotations on request models.
-- Error shaping is centralized in `GlobalExceptionHandler`.
-- Logging is configured at JDBC trace/debug levels in `application.yml`.
+- Error shaping is centralized in `GlobalExceptionHandler`, including safe generic 500 messages and SLF4J logging for all handled exception types.
+- JDBC trace/debug logging is configured in `application.yml`; application exception logging lives in `GlobalExceptionHandler`.
 - No security, CORS, caching, rate limiting, or tracing middleware is present in HEAD.
 
 ## Backend Deep Dive

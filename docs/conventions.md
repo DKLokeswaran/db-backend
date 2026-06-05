@@ -52,8 +52,11 @@ Not found in committed history. The backend is entirely synchronous in its commi
 ## Validation and Error Style
 
 - Input is validated with annotation-based Bean Validation at the controller boundary.
-- Existence checks are performed explicitly before update and delete operations.
-- Errors are returned as structured maps rather than as exceptions propagated to the client.
+- Missing resources should eventually be signaled with `ResourceNotFoundException` from the service layer; `GlobalExceptionHandler` maps it to a 404 envelope.
+- Until controllers are thinned, `UserController` still returns 404 inline via `ApiResponseBuilder.error`.
+- Service parameter validation throws `IllegalArgumentException`; the global handler maps it to `400 Bad Request`.
+- Unexpected exceptions are logged at ERROR with stack traces; clients receive a generic `An unexpected error occurred` message.
+- Errors are returned as structured maps (`ApiResponseBuilder` envelopes), not raw exception types.
 
 ## Practical Rule of Thumb
 
