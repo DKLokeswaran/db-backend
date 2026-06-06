@@ -13,6 +13,8 @@
 - Controllers live under `controller`.
 - Services live under `service`.
 - Repositories live under `repository`.
+- Request and response DTOs live under `dto/request` and `dto/response`.
+- Entity mappers live under `mapper`.
 - Shared helpers live under `common`.
 - Error handlers live under `exception`.
 - Domain entities and enums live under `model`.
@@ -25,7 +27,8 @@ There are no barrel files or re-export aggregators in committed history.
 - Imports are ordered and cleaned by Spotless (`removeUnusedImports`) with Google Java Format (AOSP style).
 - Public methods appear before private helpers in the controller and utility classes.
 - Utility classes use a private constructor and static methods.
-- Controllers return `ResponseEntity<Object>` rather than custom wrapper DTOs.
+- Controllers return `ResponseEntity<Object>` with response DTOs or `ApiResponseBuilder` message maps.
+- Manual mapping lives in stateless `{Entity}Mapper` utility classes (no MapStruct in the workspace).
 
 ## Async Patterns
 
@@ -51,13 +54,13 @@ Not found in committed history. The backend is entirely synchronous in its commi
 
 ## Validation and Error Style
 
-- Input is validated with annotation-based Bean Validation at the controller boundary.
-- Missing resources should eventually be signaled with `ResourceNotFoundException` from the service layer; `GlobalExceptionHandler` maps it to a 404 envelope.
-- Until controllers are thinned, `UserController` still returns 404 inline via `ApiResponseBuilder.error`.
+- Input is validated with Jakarta Bean Validation on request DTOs (`@Valid` on controller parameters).
+- Persistence entities under `model` are mapping targets only for the User module; validation annotations belong on request DTOs.
+- Missing resources are signaled with `ResourceNotFoundException` from the service layer; `GlobalExceptionHandler` maps it to a 404 envelope.
 - Service parameter validation throws `IllegalArgumentException`; the global handler maps it to `400 Bad Request`.
 - Unexpected exceptions are logged at ERROR with stack traces; clients receive a generic `An unexpected error occurred` message.
-- Errors are returned as structured maps (`ApiResponseBuilder` envelopes), not raw exception types.
+- Errors are returned as structured maps (`ApiResponseBuilder` envelopes) or response DTOs, not raw exception types.
 
 ## Practical Rule of Thumb
 
-To add new backend code in the same style, place HTTP handlers in `controller`, business orchestration in `service`, persistence interfaces in `repository`, and shared helpers such as response shaping or string validation in `common` rather than duplicating that logic in controllers or services.
+To add new backend code in the same style, place HTTP handlers in `controller`, business orchestration in `service`, persistence interfaces in `repository`, request/response DTOs under `dto`, mappers under `mapper`, and shared helpers such as response shaping or string validation in `common`.

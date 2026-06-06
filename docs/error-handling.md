@@ -37,7 +37,11 @@ The `details` value is a field-name-to-message map.
 
 `ResourceNotFoundException` carries separate `error` and `message` fields. Use `ResourceNotFoundException.forResourceWithId(String resourceName, Object id)` to build the standard `{Resource} not found` / `No {resource} with id {id} exists` pair.
 
-The handler is registered in the workspace, but `UserController` still returns 404 inline via `ApiResponseBuilder.error` for missing users. Services are expected to throw `ResourceNotFoundException` as controllers are thinned in later refactors.
+The handler is registered and `UserService` throws `ResourceNotFoundException` for missing users on find, update, and delete. `UserController` no longer builds 404 responses inline for those flows.
+
+### Service-level parameter validation
+
+`UserService` validates mobile search inputs before repository calls. Blank `mobile` or `prefix` values and invalid `limit` or prefix length throw `IllegalArgumentException`, which is converted to `400 Bad Request` by the global handler.
 
 ### Unexpected failures
 
@@ -50,27 +54,19 @@ The handler is registered in the workspace, but `UserController` still returns 4
 
 The handler logs the full stack trace at ERROR but does not expose the underlying exception message to clients.
 
-### Controller-level not found handling (current)
-
-`UserController` still handles missing user ids directly by returning a 404 response from `ApiResponseBuilder.error`. This matches the `ResourceNotFoundException` envelope shape but bypasses the new handler until the User module is refactored.
-
-### Service-level parameter validation
-
-`UserService` validates mobile search inputs before repository calls. Blank `mobile` or `prefix` values and invalid `limit` or prefix length throw `IllegalArgumentException`, which is converted to `400 Bad Request` by the global handler.
-
 ## Validation Rules
 
-The validation library in use is Jakarta Bean Validation. Current committed constraints are:
+The validation library in use is Jakarta Bean Validation. User API input constraints live on `UpsertUserRequest`; the `User` entity is persistence-only in the workspace.
 
-| Model | Field | Constraint message |
+| Class | Field | Constraint message |
 | --- | --- | --- |
-| `User` | `name` | `User name is required` |
-| `User` | `mobileNo` | `Mobile number is required` |
-| `User` | `addressLine` | `Address line is required` |
-| `User` | `locality` | `Locality is required` |
-| `User` | `state` | `State is required` |
-| `User` | `country` | `Country is required` |
-| `User` | `pincode` | `Pincode is required` |
+| `UpsertUserRequest` | `name` | `User name is required` |
+| `UpsertUserRequest` | `mobileNo` | `Mobile number is required` |
+| `UpsertUserRequest` | `addressLine` | `Address line is required` |
+| `UpsertUserRequest` | `locality` | `Locality is required` |
+| `UpsertUserRequest` | `state` | `State is required` |
+| `UpsertUserRequest` | `country` | `Country is required` |
+| `UpsertUserRequest` | `pincode` | `Pincode is required` |
 | `Event` | `name` | `Event name is required` |
 | `OfferingType` | `name` | `OfferingType name is required` |
 | `OfferingType` | `category` | `Offering category is required` |
@@ -129,7 +125,5 @@ The validation library in use is Jakarta Bean Validation. Current committed cons
 
 ## Notable Gaps
 
-- `ResourceNotFoundException` exists but is not yet thrown from `UserService` or `UserController`
 - No broader domain exception hierarchy beyond not-found
-- No per-controller `try/catch` blocks beyond existence checks
 - No error code enum or catalog

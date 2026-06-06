@@ -10,10 +10,10 @@ todos:
     status: completed
   - id: dto-user
     content: Create dto/, mapper/ packages; refactor User module as DTO reference implementation
-    status: pending
+    status: completed
   - id: validation-cleanup
     content: Move validation to request DTOs; unify query-param validation in service layer
-    status: pending
+    status: completed
   - id: tests-api
     content: Add UserControllerTests, UserServiceTests; update api-testing/user.http with PUT + DTO shapes
     status: pending

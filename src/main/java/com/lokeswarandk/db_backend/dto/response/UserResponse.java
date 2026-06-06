@@ -1,34 +1,18 @@
-package com.lokeswarandk.db_backend.model;
+package com.lokeswarandk.db_backend.dto.response;
 
-import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
 
-@Table("user")
-public class User {
+public class UserResponse {
 
-    @Id private Long id;
-
+    private Long id;
     private String name;
-
     private String mobileNo;
-
     private String addressLine;
-
     private String locality;
-
     private String state;
-
     private String country;
-
     private String pincode;
-
-    @Nullable private LocalDateTime createdAt;
-
-    public User() {
-        // Required by Spring Data JDBC for object materialization.
-    }
+    private LocalDateTime createdAt;
 
     public Long getId() {
         return id;

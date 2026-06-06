@@ -27,10 +27,10 @@ Requests present in the current workspace:
 - `GET /api/users/{userId}`
 - `GET /api/users`
 - `GET /api/users?mobile={mobileNo}`
-- `GET /api/users/search/mobile?prefix={mobilePrefix}` (with optional `limit`)
+- `GET /api/users/search/mobile?prefix={mobilePrefix}` (with optional `limit`; returns `{ "mobileNos": [...] }`)
 - `GET /api/users/search/mobile?prefix=9` (expects `400` for short prefix)
 - `GET /api/users/search/mobile` (expects `400` for missing prefix)
-- `GET /api/users?mobile=0000000000` (expects `200` with empty array when no match)
+- `GET /api/users?mobile=0000000000` (expects `200` with empty `UserResponse` array when no match)
 - `POST /api/users`
 - `DELETE /api/users/{userId}`
 
@@ -64,4 +64,4 @@ Not found in committed history. There are no mock factories, fixture files, or t
 
 ## Coverage Notes
 
-The committed test surface is light. Most behavioral coverage currently lives in the controller implementation and in the manual HTTP request file rather than in automated assertions.
+The committed test surface is light. Most behavioral coverage currently lives in the service layer and in the manual HTTP request file rather than in automated assertions.

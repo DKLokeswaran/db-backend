@@ -4,7 +4,7 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 13 |
+| Total commits | 14 |
 | First commit date | 2026-05-12 |
 | Latest commit date | 2026-06-05 |
 | Active contributors | 1 |
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 5 |
+| 2026-06 | 6 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -95,6 +95,11 @@ Top changed files by commit frequency in HEAD history:
 - Added `.editorconfig` and Spotless Maven plugin (Google Java Format, AOSP style).
 - Normalized Java and YAML formatting across the codebase; bound `spotless:check` to the `verify` phase.
 
+### 2026-06-05: centralized exception handling improvements
+
+- Added `ResourceNotFoundException` and registered it in `GlobalExceptionHandler`.
+- Added SLF4J logging for handled exceptions and a generic client message for 500 responses.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
@@ -103,6 +108,7 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `184af90` | Lokeswaran DK | 2026-06-05 | added logging for exceptions, added genric error message for 500 error code added seperate class for 404 errors |
 | `fe80a08` | Lokeswaran DK | 2026-06-05 | aadded maven spotless plugin,.editorconfig, ran spotless apply and added plan for codebase standardisation |
 | `146cc63` | Lokeswaran DK | 2026-06-05 | added .cursorignore file |
 | `00f8842` | Lokeswaran DK | 2026-06-01 | added mobile no prefix api ans list users by mobile param |
@@ -121,4 +127,4 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `fe80a086dc3a63585e938324a296af1d05694421`
+Last Synced Commit: `184af905cc37b1d66c6e3ca8ba106f7ff245f3d6`

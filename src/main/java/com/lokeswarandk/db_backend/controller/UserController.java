@@ -1,7 +1,7 @@
 package com.lokeswarandk.db_backend.controller;
 
 import com.lokeswarandk.db_backend.common.ApiResponseBuilder;
-import com.lokeswarandk.db_backend.model.User;
+import com.lokeswarandk.db_backend.dto.request.UpsertUserRequest;
 import com.lokeswarandk.db_backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,10 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private static final String USER_NOT_FOUND = "User not found";
-    private static final String USER_ID_PREFIX = "No user with id ";
-    private static final String USER_ID_SUFFIX = " exists";
-
     private final UserService userService;
 
     public UserController(UserService userService) {
@@ -31,9 +27,8 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> addUser(@Valid @RequestBody User user) {
-        User savedUser = userService.create(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+    public ResponseEntity<Object> addUser(@Valid @RequestBody UpsertUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
     }
 
     @GetMapping("/search/mobile")
@@ -44,20 +39,12 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Object> getUser(@PathVariable Long id) {
-        return userService
-                .findById(id)
-                .map(user -> ResponseEntity.ok((Object) user))
-                .orElseGet(
-                        () ->
-                                ApiResponseBuilder.error(
-                                        HttpStatus.NOT_FOUND,
-                                        USER_NOT_FOUND,
-                                        userNotFoundMessage(id)));
+        return ResponseEntity.ok(userService.findById(id));
     }
 
     @GetMapping
     public ResponseEntity<Object> listUsers(@RequestParam(required = false) String mobile) {
-        if (mobile != null && !mobile.isBlank()) {
+        if (mobile != null) {
             return ResponseEntity.ok(userService.findByMobileNo(mobile));
         }
         return ResponseEntity.ok(userService.findAll());
@@ -65,29 +52,14 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Object> updateUser(
-            @PathVariable Long id, @Valid @RequestBody User updatedUser) {
-        return userService
-                .update(id, updatedUser)
-                .map(user -> ResponseEntity.ok((Object) user))
-                .orElseGet(
-                        () ->
-                                ApiResponseBuilder.error(
-                                        HttpStatus.NOT_FOUND,
-                                        USER_NOT_FOUND,
-                                        userNotFoundMessage(id)));
+            @PathVariable Long id, @Valid @RequestBody UpsertUserRequest request) {
+        return ResponseEntity.ok(userService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteUser(@PathVariable Long id) {
-        if (!userService.deleteById(id)) {
-            return ApiResponseBuilder.error(
-                    HttpStatus.NOT_FOUND, USER_NOT_FOUND, userNotFoundMessage(id));
-        }
+        userService.deleteById(id);
         return ResponseEntity.ok(
                 ApiResponseBuilder.messagePayload("User deleted successfully", "id", id));
-    }
-
-    private String userNotFoundMessage(Long id) {
-        return USER_ID_PREFIX + id + USER_ID_SUFFIX;
     }
 }

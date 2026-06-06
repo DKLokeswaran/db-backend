@@ -11,14 +11,14 @@ The committed code uses Spring Data JDBC entities instead of migration files or 
 | Column | Java type | Nullable | Constraints / notes |
 | --- | --- | --- | --- |
 | `id` | `Long` | yes | primary key, `@Id` |
-| `name` | `String` | no | `@NotBlank` |
-| `mobileNo` | `String` | no | `@NotBlank` |
-| `addressLine` | `String` | no | `@NotBlank` |
-| `locality` | `String` | no | `@NotBlank` |
-| `state` | `String` | no | `@NotBlank` |
-| `country` | `String` | no | `@NotBlank` |
-| `pincode` | `String` | no | `@NotBlank` |
-| `createdAt` | `LocalDateTime` | yes | set by controller on create when absent |
+| `name` | `String` | no | validated on `UpsertUserRequest` |
+| `mobileNo` | `String` | no | validated on `UpsertUserRequest` |
+| `addressLine` | `String` | no | validated on `UpsertUserRequest` |
+| `locality` | `String` | no | validated on `UpsertUserRequest` |
+| `state` | `String` | no | validated on `UpsertUserRequest` |
+| `country` | `String` | no | validated on `UpsertUserRequest` |
+| `pincode` | `String` | no | validated on `UpsertUserRequest` |
+| `createdAt` | `LocalDateTime` | yes | set by service on create when absent |
 
 ### `event`
 

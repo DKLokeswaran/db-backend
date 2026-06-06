@@ -12,13 +12,27 @@
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | CRUD and mobile search endpoints under `/api/users`. |
+| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | Thin HTTP layer; accepts `UpsertUserRequest`, returns DTOs or delete message payload. |
+
+### DTO Layer
+
+| Path | Type | Public surface | Notes |
+| --- | --- | --- | --- |
+| `src/main/java/com/lokeswarandk/db_backend/dto/request/UpsertUserRequest.java` | Request DTO | getters/setters for user fields | Jakarta validation for create and update requests. |
+| `src/main/java/com/lokeswarandk/db_backend/dto/response/UserResponse.java` | Response DTO | getters/setters for user fields plus `id`, `createdAt` | Client-facing user shape for CRUD and mobile filter. |
+| `src/main/java/com/lokeswarandk/db_backend/dto/response/MobilePrefixSearchResponse.java` | Response DTO | `mobileNos` | Wraps distinct mobile numbers from prefix search. |
+
+### Mapping Layer
+
+| Path | Type | Public surface | Notes |
+| --- | --- | --- | --- |
+| `src/main/java/com/lokeswarandk/db_backend/mapper/UserMapper.java` | Utility mapper | `toEntity`, `applyFields`, `toResponse`, `toResponseList` | Manual DTO/entity conversion for the User module. |
 
 ### Service Layer
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/service/UserService.java` | Spring service | `create`, `findById`, `findAll`, `findByMobileNo`, `searchMobileNosByPrefix`, `update`, `deleteById` | Encapsulates user CRUD, mobile filter, and prefix search over the repository. |
+| `src/main/java/com/lokeswarandk/db_backend/service/UserService.java` | Spring service | `create`, `findById`, `findAll`, `findByMobileNo`, `searchMobileNosByPrefix`, `update`, `deleteById` | Returns DTOs; throws `ResourceNotFoundException` for missing users. |
 
 ### Shared Utilities
 
@@ -78,12 +92,12 @@
 - Annotation: `@RestController`, `@RequestMapping("/api/users")`
 - Injected dependency: `UserService`
 - Public methods:
-  - `addUser(User user)`: POST create flow delegated to service
-  - `getUser(Long id)`: GET by id; returns 404 when missing
-  - `listUsers(String mobile)`: GET all users, or users matching `mobile` when the query param is present
-  - `searchMobileByPrefix(String prefix, Integer limit)`: GET distinct mobile numbers for typeahead
-  - `updateUser(Long id, User updatedUser)`: PUT replace flow delegated to service; returns 404 when missing
-  - `deleteUser(Long id)`: DELETE by id; returns 404 when missing
+  - `addUser(UpsertUserRequest request)`: POST create; returns `UserResponse`
+  - `getUser(Long id)`: GET by id; service throws `ResourceNotFoundException` when missing
+  - `listUsers(String mobile)`: GET all users as `UserResponse` list, or filter by `mobile` when present
+  - `searchMobileByPrefix(String prefix, Integer limit)`: GET `MobilePrefixSearchResponse`
+  - `updateUser(Long id, UpsertUserRequest request)`: PUT update; returns `UserResponse`
+  - `deleteUser(Long id)`: DELETE; service throws `ResourceNotFoundException` when missing
 
 ### `UserService`
 
@@ -91,14 +105,40 @@
 - Class type: Spring `@Service`
 - Injected dependency: `UserRepository`
 - Public methods:
-  - `create(User user)`: create flow; clears incoming id and fills `createdAt` when absent
-  - `findById(Long id)`: fetch one user
-  - `findAll()`: list all users
+  - `create(UpsertUserRequest request)`: maps to entity, clears id, fills `createdAt` when absent; returns `UserResponse`
+  - `findById(Long id)`: returns `UserResponse` or throws `ResourceNotFoundException`
+  - `findAll()`: returns `List<UserResponse>`
   - `findByMobileNo(String mobileNo)`: exact mobile match; uses `StringUtils.requireNonBlank`
-  - `searchMobileNosByPrefix(String prefix, Integer limit)`: distinct prefix search with default limit 5 and max 10
-  - `update(Long id, User updatedUser)`: replace flow; returns empty when user does not exist
-  - `deleteById(Long id)`: delete flow; returns false when user does not exist
+  - `searchMobileNosByPrefix(String prefix, Integer limit)`: returns `MobilePrefixSearchResponse`
+  - `update(Long id, UpsertUserRequest request)`: applies fields via `UserMapper`; throws when user missing
+  - `deleteById(Long id)`: throws `ResourceNotFoundException` when user missing
 - Constants: `MOBILE_PREFIX_MIN_LENGTH`, `MOBILE_SEARCH_DEFAULT_LIMIT`, `MOBILE_SEARCH_MAX_LIMIT`
+
+### `UserMapper`
+
+- Package: `com.lokeswarandk.db_backend.mapper`
+- Class type: utility mapper (`final`, private constructor)
+- Public static methods:
+  - `toEntity(UpsertUserRequest request)`
+  - `applyFields(User user, UpsertUserRequest request)`
+  - `toResponse(User user)`
+  - `toResponseList(List<User> users)`
+
+### `UpsertUserRequest`
+
+- Package: `com.lokeswarandk.db_backend.dto.request`
+- Fields: `name`, `mobileNo`, `addressLine`, `locality`, `state`, `country`, `pincode`
+- Constraints: `@NotBlank` on all fields
+
+### `UserResponse`
+
+- Package: `com.lokeswarandk.db_backend.dto.response`
+- Fields: `id`, `name`, `mobileNo`, `addressLine`, `locality`, `state`, `country`, `pincode`, `createdAt`
+
+### `MobilePrefixSearchResponse`
+
+- Package: `com.lokeswarandk.db_backend.dto.response`
+- Fields: `mobileNos` (`List<String>`)
 
 ### `StringUtils`
 
@@ -159,7 +199,7 @@
 - Class type: entity
 - Annotation: `@Table("user")`
 - Fields: `id`, `name`, `mobileNo`, `addressLine`, `locality`, `state`, `country`, `pincode`, `createdAt`
-- Constraints: `@NotBlank` on all string fields except `createdAt`
+- Constraints: none in the workspace; validation lives on `UpsertUserRequest`
 - Public methods: standard getters and setters for each field
 
 ### `Event`
@@ -218,4 +258,4 @@
 
 ## Public API Notes
 
-The repository includes a service class for user flows and mobile search/filter helpers. `ResourceNotFoundException` is available for not-found flows, but `UserController` still builds 404 responses inline. There are still no DTO classes or mapper classes. The controller still operates on entity objects at the API boundary for CRUD and mobile-filter responses; prefix search returns a `List<String>`.
+The User module uses request/response DTOs and `UserMapper` at the API boundary. `UserService` throws `ResourceNotFoundException` for missing users and returns `UserResponse` or `MobilePrefixSearchResponse` objects. Other domain modules still expose entities only through persistence layers.

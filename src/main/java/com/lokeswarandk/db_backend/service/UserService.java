@@ -1,12 +1,16 @@
 package com.lokeswarandk.db_backend.service;
 
 import com.lokeswarandk.db_backend.common.StringUtils;
+import com.lokeswarandk.db_backend.dto.request.UpsertUserRequest;
+import com.lokeswarandk.db_backend.dto.response.MobilePrefixSearchResponse;
+import com.lokeswarandk.db_backend.dto.response.UserResponse;
+import com.lokeswarandk.db_backend.exception.ResourceNotFoundException;
+import com.lokeswarandk.db_backend.mapper.UserMapper;
 import com.lokeswarandk.db_backend.model.User;
 import com.lokeswarandk.db_backend.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,35 +26,43 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public User create(User user) {
+    public UserResponse create(UpsertUserRequest request) {
+        User user = UserMapper.toEntity(request);
         user.setId(null);
         if (user.getCreatedAt() == null) {
             user.setCreatedAt(LocalDateTime.now());
         }
-        return userRepository.save(user);
+        return UserMapper.toResponse(userRepository.save(user));
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public UserResponse findById(Long id) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> ResourceNotFoundException.forResourceWithId("User", id));
+        return UserMapper.toResponse(user);
     }
 
-    public List<User> findAll() {
+    public List<UserResponse> findAll() {
         List<User> users = new ArrayList<>();
         userRepository.findAll().forEach(users::add);
-        return users;
+        return UserMapper.toResponseList(users);
     }
 
-    public List<User> findByMobileNo(String mobileNo) {
-        return userRepository.findByMobileNo(StringUtils.requireNonBlank(mobileNo, "mobile"));
+    public List<UserResponse> findByMobileNo(String mobileNo) {
+        return UserMapper.toResponseList(
+                userRepository.findByMobileNo(StringUtils.requireNonBlank(mobileNo, "mobile")));
     }
 
-    public List<String> searchMobileNosByPrefix(String prefix, Integer limit) {
+    public MobilePrefixSearchResponse searchMobileNosByPrefix(String prefix, Integer limit) {
         String normalizedPrefix = StringUtils.requireNonBlank(prefix, "prefix");
         if (normalizedPrefix.length() < MOBILE_PREFIX_MIN_LENGTH) {
             throw new IllegalArgumentException(
                     "prefix must be at least " + MOBILE_PREFIX_MIN_LENGTH + " characters");
         }
-        return userRepository.findDistinctMobileNosByPrefix(normalizedPrefix, resolveLimit(limit));
+        List<String> mobileNos =
+                userRepository.findDistinctMobileNosByPrefix(normalizedPrefix, resolveLimit(limit));
+        return new MobilePrefixSearchResponse(mobileNos);
     }
 
     private int resolveLimit(Integer limit) {
@@ -63,19 +75,19 @@ public class UserService {
         return Math.min(limit, MOBILE_SEARCH_MAX_LIMIT);
     }
 
-    public Optional<User> update(Long id, User updatedUser) {
-        if (userRepository.findById(id).isEmpty()) {
-            return Optional.empty();
-        }
-        updatedUser.setId(id);
-        return Optional.of(userRepository.save(updatedUser));
+    public UserResponse update(Long id, UpsertUserRequest request) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> ResourceNotFoundException.forResourceWithId("User", id));
+        UserMapper.applyFields(user, request);
+        return UserMapper.toResponse(userRepository.save(user));
     }
 
-    public boolean deleteById(Long id) {
+    public void deleteById(Long id) {
         if (!userRepository.existsById(id)) {
-            return false;
+            throw ResourceNotFoundException.forResourceWithId("User", id);
         }
         userRepository.deleteById(id);
-        return true;
     }
 }

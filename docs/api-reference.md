@@ -17,7 +17,9 @@ The committed REST surface contains one resource group: `/api/users`.
 
 ## Shared Schemas
 
-### User request body
+### User request body (`UpsertUserRequest`)
+
+Used for `POST /api/users` and `PUT /api/users/{id}`.
 
 | Field | Type | Required | Validation |
 | --- | --- | --- | --- |
@@ -28,12 +30,32 @@ The committed REST surface contains one resource group: `/api/users`.
 | `state` | string | yes | `@NotBlank` |
 | `country` | string | yes | `@NotBlank` |
 | `pincode` | string | yes | `@NotBlank` |
-| `createdAt` | datetime | no | if omitted, server fills it on create |
-| `id` | number | no | ignored on create; overwritten on update |
 
-### User response body
+Request bodies do not accept `id` or `createdAt`; those are server-managed.
 
-The controller returns the full `User` entity on create, read, list, and update. The entity shape matches the request body plus `id` and `createdAt`.
+### User response body (`UserResponse`)
+
+Returned on create, read, list, and update.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | number | persisted primary key |
+| `name` | string | |
+| `mobileNo` | string | |
+| `addressLine` | string | |
+| `locality` | string | |
+| `state` | string | |
+| `country` | string | |
+| `pincode` | string | |
+| `createdAt` | datetime | set by service on create when absent |
+
+### Mobile prefix search response (`MobilePrefixSearchResponse`)
+
+Returned by `GET /api/users/search/mobile`.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `mobileNos` | string array | distinct mobile numbers matching the prefix |
 
 ## Create User
 
@@ -55,15 +77,14 @@ Request body example:
 
 Behavior:
 
-- Request body is validated with `@Valid`.
-- `UserController` delegates create logic to `UserService`.
-- In the service, incoming `id` is nulled before save.
-- In the service, `createdAt` is set to `LocalDateTime.now()` when missing.
-- Response is the saved entity.
+- Request body is validated with `@Valid` on `UpsertUserRequest`.
+- `UserController` delegates to `UserService.create`.
+- `UserMapper.toEntity` maps the request to a `User` entity; the service clears `id` and sets `createdAt` when absent.
+- Response is a `UserResponse` DTO.
 
 Responses:
 
-- `201 Created` with the saved `User` object
+- `201 Created` with a `UserResponse` object
 - `400 Bad Request` when validation fails
 - `500 Internal Server Error` for unexpected exceptions
 
@@ -77,8 +98,8 @@ Path parameter:
 
 Responses:
 
-- `200 OK` with the matching `User`
-- `404 Not Found` with response envelope when the id does not exist
+- `200 OK` with a `UserResponse`
+- `404 Not Found` when the id does not exist (`ResourceNotFoundException` from `UserService`)
 - `500 Internal Server Error` for unexpected exceptions
 
 404 response shape:
@@ -109,12 +130,13 @@ Query parameter:
 Behavior:
 
 - Delegates to `UserService.findByMobileNo`.
-- Returns all `User` rows with that mobile number (mobile is not unique in the domain).
+- Returns all matching users as `UserResponse` objects (mobile is not unique in the domain).
 - Returns an empty array when no users match.
+- Blank `mobile` values throw `IllegalArgumentException` in the service.
 
 Responses:
 
-- `200 OK` with an array of `User` (possibly empty)
+- `200 OK` with an array of `UserResponse` (possibly empty)
 - `400 Bad Request` when `mobile` is missing or blank
 - `500 Internal Server Error` for unexpected exceptions
 
@@ -135,15 +157,17 @@ Behavior:
 - Runs `SELECT DISTINCT mobile_no ... WHERE mobile_no LIKE prefix%` with the resolved limit.
 - Intended for typeahead UIs that suggest mobile numbers while typing.
 
-Success response: JSON array of strings, for example:
+Success response: `MobilePrefixSearchResponse` object, for example:
 
 ```json
-["9994722907", "9994730123"]
+{
+  "mobileNos": ["9994722907", "9994730123"]
+}
 ```
 
 Responses:
 
-- `200 OK` with a string array (possibly empty)
+- `200 OK` with a `MobilePrefixSearchResponse` (possibly empty `mobileNos` array)
 - `400 Bad Request` when `prefix` is missing, blank, or shorter than 2 characters; when `limit` is less than 1; or when Spring rejects a missing required `prefix` parameter
 - `500 Internal Server Error` for unexpected exceptions
 
@@ -162,18 +186,18 @@ Responses:
 
 `PUT /api/users/{id}`
 
-Request body shape: same as create user.
+Request body shape: same `UpsertUserRequest` fields as create user.
 
 Behavior:
 
-- Body is validated with `@Valid`.
-- Existing user must exist or the endpoint returns 404.
-- Path id wins over any body id because the service applies `updatedUser.setId(id)` before save.
-- Response is the saved entity.
+- Body is validated with `@Valid` on `UpsertUserRequest`.
+- `UserService.update` loads the user or throws `ResourceNotFoundException`.
+- `UserMapper.applyFields` copies request fields onto the existing entity; path `id` is preserved.
+- Response is a `UserResponse` DTO.
 
 Responses:
 
-- `200 OK` with the saved `User`
+- `200 OK` with the saved `UserResponse`
 - `400 Bad Request` on validation failure
 - `404 Not Found` when the user does not exist
 - `500 Internal Server Error` for unexpected exceptions
@@ -184,7 +208,7 @@ Responses:
 
 Behavior:
 
-- Existence is checked in `UserService.deleteById` before deletion.
+- `UserService.deleteById` throws `ResourceNotFoundException` when the id does not exist.
 - Successful deletes return a simple message payload.
 
 Success response shape:

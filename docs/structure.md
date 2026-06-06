@@ -16,6 +16,10 @@ db-backend/
     common/StringUtils.java         Shared string validation helper
     controller/UserController.java  User CRUD endpoints
     service/UserService.java        User CRUD service orchestration
+    dto/request/UpsertUserRequest.java  User create/update request DTO
+    dto/response/UserResponse.java      User API response DTO
+    dto/response/MobilePrefixSearchResponse.java  Mobile typeahead response DTO
+    mapper/UserMapper.java          User entity/DTO mapping
     exception/GlobalExceptionHandler.java  Global validation and error advice
     exception/ResourceNotFoundException.java  Domain not-found runtime exception
     model/                          Domain entities and enums
@@ -38,6 +42,9 @@ db-backend/
 - New controllers: `src/main/java/com/lokeswarandk/db_backend/controller`
 - New services: `src/main/java/com/lokeswarandk/db_backend/service`
 - New repositories: `src/main/java/com/lokeswarandk/db_backend/repository`
+- Request DTOs: `src/main/java/com/lokeswarandk/db_backend/dto/request`
+- Response DTOs: `src/main/java/com/lokeswarandk/db_backend/dto/response`
+- Entity mappers: `src/main/java/com/lokeswarandk/db_backend/mapper`
 - Shared helpers: `src/main/java/com/lokeswarandk/db_backend/common`
 - Error advice: `src/main/java/com/lokeswarandk/db_backend/exception`
 - New domain models: `src/main/java/com/lokeswarandk/db_backend/model`
