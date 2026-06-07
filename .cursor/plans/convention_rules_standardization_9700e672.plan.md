@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: tests-api
     content: Add UserControllerTests, UserServiceTests; update api-testing/user.http with PUT + DTO shapes
-    status: pending
+    status: completed
   - id: docs-sync
     content: Update docs/conventions.md, architecture.md, error-handling.md, structure.md, api-reference.md
     status: pending

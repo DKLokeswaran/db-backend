@@ -27,6 +27,9 @@ db-backend/
   src/main/resources/application.yml  Datasource and server configuration
   src/test/java/com/lokeswarandk/db_backend/
     DbBackendApplicationTests.java   Spring context smoke test
+    controller/UserControllerTests.java  User API web slice tests
+    service/UserServiceTests.java    User service unit tests
+  src/test/resources/application.yml  H2 in-memory test datasource config
 ```
 
 ## Folder Roles
@@ -34,6 +37,7 @@ db-backend/
 - `src/main/java`: production code
 - `src/main/resources`: application configuration
 - `src/test/java`: automated tests
+- `src/test/resources`: test configuration (H2 datasource)
 - `api-testing`: manual HTTP request artifacts
 - `scripts`: local run helpers
 

@@ -19,6 +19,7 @@
 - Error handlers live under `exception`.
 - Domain entities and enums live under `model`.
 - Tests live under `src/test/java` using the same package structure as main code.
+- Per-resource test naming: `{Entity}ControllerTests.java` and `{Entity}ServiceTests.java`.
 
 There are no barrel files or re-export aggregators in committed history.
 

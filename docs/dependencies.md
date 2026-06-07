@@ -15,7 +15,9 @@
 | `org.springframework.boot:spring-boot-starter-validation` | managed by parent | compile | validation | Jakarta Bean Validation support | yes, input validation |
 | `org.springframework.boot:spring-boot-starter-web` | managed by parent | compile | HTTP/networking | REST controller support and embedded web server | yes, HTTP exposure |
 | `org.postgresql:postgresql` | managed by parent or transitive version resolution in build | compile | database driver | PostgreSQL JDBC driver | yes |
-| `org.springframework.boot:spring-boot-starter-test` | managed by parent | test | testing | Spring Boot test support | no |
+| `org.springframework.boot:spring-boot-starter-test` | managed by parent | test | testing | Spring Boot test support (JUnit, Mockito, AssertJ) | no |
+| `org.springframework.boot:spring-boot-starter-webmvc-test` | managed by parent | test | testing | MockMvc web slice tests | no |
+| `com.h2database:h2` | managed by parent | test | database driver | in-memory JDBC for test profile | no |
 
 ## Notable Transitive Bundles
 
@@ -25,6 +27,7 @@ The build manifest does not pin transitive versions directly, but the starter de
 - `spring-boot-starter-validation`: Jakarta Validation API, Hibernate Validator
 - `spring-boot-starter-web`: Spring MVC, embedded Tomcat, Jackson JSON support
 - `spring-boot-starter-test`: JUnit Jupiter, Spring Test, Mockito, AssertJ, Hamcrest
+- `spring-boot-starter-webmvc-test`: MockMvc and `@WebMvcTest` support
 
 ## Build Plugins
 
@@ -40,7 +43,7 @@ The build manifest does not pin transitive versions directly, but the starter de
 - Routing: Spring MVC request mapping
 - HTTP/networking: Spring Web, embedded server, PostgreSQL JDBC
 - Database/ORM: Spring Data JDBC, PostgreSQL driver
-- Testing: Spring Boot Starter Test, JUnit 5
+- Testing: Spring Boot Starter Test, Spring WebMvc Test, H2 (test scope), JUnit 5, Mockito, AssertJ
 - Build tooling: Maven Wrapper, Spring Boot Maven Plugin, Spotless Maven Plugin
 - Linting/formatting: Spotless (Google Java Format AOSP), `.editorconfig`
 - Utilities: validation, response shaping helper

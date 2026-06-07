@@ -5,22 +5,32 @@
 
 ###
 
-# Get User
+# Get User (UserResponse)
 GET {{baseUrl}}/api/users/{{userId}}
 
 ###
 
-# List Users
+# Get User — not found (expect 404)
+GET {{baseUrl}}/api/users/999999
+
+###
+
+# List Users (UserResponse[])
 GET {{baseUrl}}/api/users
 
 ###
 
-# List Users by mobile (full User objects)
+# List Users by mobile (UserResponse[])
 GET {{baseUrl}}/api/users?mobile={{mobileNo}}
 
 ###
 
-# Search distinct mobile numbers by prefix (default limit 5)
+# List by mobile with blank value (expect 400)
+GET {{baseUrl}}/api/users?mobile=
+
+###
+
+# Search distinct mobile numbers by prefix (MobilePrefixSearchResponse, default limit 5)
 GET {{baseUrl}}/api/users/search/mobile?prefix={{mobilePrefix}}
 
 ###
@@ -45,20 +55,75 @@ GET {{baseUrl}}/api/users/search/mobile
 
 ###
 
-# List by mobile with no matches (expect 200 and empty array)
+# List by mobile with no matches (expect 200 and empty UserResponse array)
 GET {{baseUrl}}/api/users?mobile=0000000000
 
 ###
 
-# Add User
+# Add User (UpsertUserRequest body → UserResponse)
 POST {{baseUrl}}/api/users
 Content-Type: application/json
 
-{"name":"kandasamy","mobileNo":"9994722907","addressLine":"tsr layout","locality":"tiruppur","state":"tn","country":"india","pincode":"641607"}
+{
+  "name": "kandasamy",
+  "mobileNo": "9994722907",
+  "addressLine": "tsr layout",
+  "locality": "tiruppur",
+  "state": "tn",
+  "country": "india",
+  "pincode": "641607"
+}
+
+###
+
+# Add User — validation error (expect 400)
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+###
+
+# Update User (UpsertUserRequest body → UserResponse)
+PUT {{baseUrl}}/api/users/{{userId}}
+Content-Type: application/json
+
+{
+  "name": "kandasamy updated",
+  "mobileNo": "9994722907",
+  "addressLine": "tsr layout",
+  "locality": "tiruppur",
+  "state": "tn",
+  "country": "india",
+  "pincode": "641607"
+}
+
+###
+
+# Update User — not found (expect 404)
+PUT {{baseUrl}}/api/users/999999
+Content-Type: application/json
+
+{
+  "name": "ghost",
+  "mobileNo": "9994722907",
+  "addressLine": "tsr layout",
+  "locality": "tiruppur",
+  "state": "tn",
+  "country": "india",
+  "pincode": "641607"
+}
 
 ###
 
 # Delete User
 DELETE {{baseUrl}}/api/users/{{userId}}
+
+###
+
+# Delete User — not found (expect 404)
+DELETE {{baseUrl}}/api/users/999999
 
 ###

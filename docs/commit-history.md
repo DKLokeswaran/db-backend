@@ -4,9 +4,9 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 14 |
+| Total commits | 15 |
 | First commit date | 2026-05-12 |
-| Latest commit date | 2026-06-05 |
+| Latest commit date | 2026-06-06 |
 | Active contributors | 1 |
 | Most active contributor | Lokeswaran DK |
 
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 6 |
+| 2026-06 | 7 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -100,14 +100,25 @@ Top changed files by commit frequency in HEAD history:
 - Added `ResourceNotFoundException` and registered it in `GlobalExceptionHandler`.
 - Added SLF4J logging for handled exceptions and a generic client message for 500 responses.
 
+### 2026-06-06: User DTO boundary and mapper layer
+
+- Introduced `UpsertUserRequest`, `UserResponse`, and `MobilePrefixSearchResponse`.
+- Added `UserMapper` for manual entity/DTO conversion.
+- Refactored `UserController` and `UserService` to use DTOs; services throw `ResourceNotFoundException`.
+- Removed Jakarta validation from the `User` entity (validation lives on request DTOs).
+
 ## Breaking Changes
 
-No commit message explicitly marks a breaking change. The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
+No commit message explicitly marks a breaking change. Notable API shape changes without an explicit breaking-change tag:
+
+- Mobile prefix search (`GET /api/users/search/mobile`) now returns `{ "mobileNos": [...] }` instead of a bare string array.
+- The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
 
 ## Full Commit Log
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `5086206` | Lokeswaran DK | 2026-06-06 | added dto layer and mappers for User module |
 | `184af90` | Lokeswaran DK | 2026-06-05 | added logging for exceptions, added genric error message for 500 error code added seperate class for 404 errors |
 | `fe80a08` | Lokeswaran DK | 2026-06-05 | aadded maven spotless plugin,.editorconfig, ran spotless apply and added plan for codebase standardisation |
 | `146cc63` | Lokeswaran DK | 2026-06-05 | added .cursorignore file |
@@ -127,4 +138,4 @@ No commit message explicitly marks a breaking change. The switch from Bruno file
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `184af905cc37b1d66c6e3ca8ba106f7ff245f3d6`
+Last Synced Commit: `5086206cba5a6090e4a7cd0eafcd0110b83f9ea8`

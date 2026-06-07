@@ -72,8 +72,11 @@
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/test/java/com/lokeswarandk/db_backend/DbBackendApplicationTests.java` | Spring Boot test | `contextLoads()` | Startup smoke test only. |
-| `api-testing/user.http` | REST Client file | N/A | Manual endpoint smoke collection. |
+| `src/test/java/com/lokeswarandk/db_backend/DbBackendApplicationTests.java` | Spring Boot test | `contextLoads()` | Startup smoke test. |
+| `src/test/java/com/lokeswarandk/db_backend/controller/UserControllerTests.java` | Web slice test | CRUD and search endpoint tests | `@WebMvcTest` with mocked `UserService`. |
+| `src/test/java/com/lokeswarandk/db_backend/service/UserServiceTests.java` | Unit test | service method tests | Mockito-based; no Spring context. |
+| `src/test/resources/application.yml` | Test config | H2 datasource settings | In-memory PostgreSQL-compatible test DB. |
+| `api-testing/user.http` | REST Client file | N/A | Manual endpoint smoke collection with happy and error paths. |
 
 ## File-by-File Details
 
