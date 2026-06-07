@@ -31,7 +31,7 @@ Java 17 / Spring Boot 4 / Spring Data JDBC / PostgreSQL layered monolith.
 3. DTOs in `dto/request` and `dto/response`
 4. `{Entity}Mapper` in `mapper/`
 5. `{Entity}Service` + `{Entity}Controller`
-6. `api-testing/{resource}.http`
+6. `api-testing/{resource}.http` — ad-hoc REST Client smoke requests (not part of the automated test suite)
 7. `{Entity}ControllerTests` + `{Entity}ServiceTests`
 
 ## Conventions

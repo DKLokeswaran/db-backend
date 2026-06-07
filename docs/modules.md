@@ -76,7 +76,7 @@
 | `src/test/java/com/lokeswarandk/db_backend/controller/UserControllerTests.java` | Web slice test | CRUD and search endpoint tests | `@WebMvcTest` with mocked `UserService`. |
 | `src/test/java/com/lokeswarandk/db_backend/service/UserServiceTests.java` | Unit test | service method tests | Mockito-based; no Spring context. |
 | `src/test/resources/application.yml` | Test config | H2 datasource settings | In-memory PostgreSQL-compatible test DB. |
-| `api-testing/user.http` | REST Client file | N/A | Manual endpoint smoke collection with happy and error paths. |
+| `api-testing/user.http` | REST Client file | N/A | Ad-hoc manual smoke collection with happy and error paths (not part of the automated test suite). Uses anonymized placeholder data. |
 
 ## File-by-File Details
 

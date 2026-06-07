@@ -45,7 +45,7 @@ class UserServiceTests {
 
         verify(userRepository).save(any(User.class));
         assertThat(response.getId()).isEqualTo(1L);
-        assertThat(response.getName()).isEqualTo("kandasamy");
+        assertThat(response.getName()).isEqualTo("Jane Doe");
     }
 
     @Test
@@ -55,7 +55,7 @@ class UserServiceTests {
         var response = userService.findById(1L);
 
         assertThat(response.getId()).isEqualTo(1L);
-        assertThat(response.getName()).isEqualTo("kandasamy");
+        assertThat(response.getName()).isEqualTo("Jane Doe");
     }
 
     @Test
@@ -76,12 +76,12 @@ class UserServiceTests {
 
     @Test
     void searchMobileNosByPrefix_returnsWrappedResults() {
-        when(userRepository.findDistinctMobileNosByPrefix("99", 5))
-                .thenReturn(List.of("9994722907", "9994730123"));
+        when(userRepository.findDistinctMobileNosByPrefix("98", 5))
+                .thenReturn(List.of("9876543210", "9876543211"));
 
-        var response = userService.searchMobileNosByPrefix("99", null);
+        var response = userService.searchMobileNosByPrefix("98", null);
 
-        assertThat(response.getMobileNos()).containsExactly("9994722907", "9994730123");
+        assertThat(response.getMobileNos()).containsExactly("9876543210", "9876543211");
     }
 
     @Test
@@ -93,7 +93,7 @@ class UserServiceTests {
 
     @Test
     void searchMobileNosByPrefix_throwsWhenLimitTooLow() {
-        assertThatThrownBy(() -> userService.searchMobileNosByPrefix("99", 0))
+        assertThatThrownBy(() -> userService.searchMobileNosByPrefix("98", 0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("limit must be at least 1");
     }
@@ -143,26 +143,26 @@ class UserServiceTests {
 
     private static UpsertUserRequest validRequest() {
         UpsertUserRequest request = new UpsertUserRequest();
-        request.setName("kandasamy");
-        request.setMobileNo("9994722907");
-        request.setAddressLine("tsr layout");
-        request.setLocality("tiruppur");
-        request.setState("tn");
-        request.setCountry("india");
-        request.setPincode("641607");
+        request.setName("Jane Doe");
+        request.setMobileNo("9876543210");
+        request.setAddressLine("123 Main Street");
+        request.setLocality("Springfield");
+        request.setState("KA");
+        request.setCountry("India");
+        request.setPincode("560001");
         return request;
     }
 
     private static User sampleUser(Long id) {
         User user = new User();
         user.setId(id);
-        user.setName("kandasamy");
-        user.setMobileNo("9994722907");
-        user.setAddressLine("tsr layout");
-        user.setLocality("tiruppur");
-        user.setState("tn");
-        user.setCountry("india");
-        user.setPincode("641607");
+        user.setName("Jane Doe");
+        user.setMobileNo("9876543210");
+        user.setAddressLine("123 Main Street");
+        user.setLocality("Springfield");
+        user.setState("KA");
+        user.setCountry("India");
+        user.setPincode("560001");
         user.setCreatedAt(LocalDateTime.parse("2026-05-31T12:00:00"));
         return user;
     }

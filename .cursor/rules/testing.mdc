@@ -12,7 +12,7 @@ alwaysApply: false
 |-------|-------|----------|
 | Controller | `{Entity}ControllerTests` | `@WebMvcTest` + MockMvc |
 | Service | `{Entity}ServiceTests` | JUnit 5 + `@ExtendWith(MockitoExtension.class)` |
-| Manual | `api-testing/{resource}.http` | REST Client happy + error paths |
+| Manual smoke | `api-testing/{resource}.http` | Ad-hoc REST Client requests to verify endpoints work (not part of the automated test suite) |
 
 ## Controller tests (Spring Boot 4)
 
@@ -36,11 +36,14 @@ class UserControllerTests {
 - `@Mock` repository, `@InjectMocks` service — no Spring context
 - Test `ResourceNotFoundException`, `IllegalArgumentException`, and DTO mapping behavior
 
-## Manual `.http` files
+## Manual `.http` files (`api-testing/`)
+
+Not an automated testing module — optional REST Client files for manually hitting endpoints during development.
 
 - Variables at top: `@baseUrl`, resource ids
 - Include POST, PUT, GET, DELETE, and expected 400/404 cases
 - Match current DTO request/response shapes
+- Use anonymized placeholder data only
 
 ## SQL integration tests
 

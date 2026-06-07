@@ -34,13 +34,13 @@ class UserControllerTests {
     private static final String VALID_USER_JSON =
             """
             {
-              "name": "kandasamy",
-              "mobileNo": "9994722907",
-              "addressLine": "tsr layout",
-              "locality": "tiruppur",
-              "state": "tn",
-              "country": "india",
-              "pincode": "641607"
+              "name": "Jane Doe",
+              "mobileNo": "9876543210",
+              "addressLine": "123 Main Street",
+              "locality": "Springfield",
+              "state": "KA",
+              "country": "India",
+              "pincode": "560001"
             }
             """;
 
@@ -58,8 +58,8 @@ class UserControllerTests {
                                 .content(VALID_USER_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("kandasamy"))
-                .andExpect(jsonPath("$.mobileNo").value("9994722907"));
+                .andExpect(jsonPath("$.name").value("Jane Doe"))
+                .andExpect(jsonPath("$.mobileNo").value("9876543210"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class UserControllerTests {
         mockMvc.perform(get("/api/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("kandasamy"));
+                .andExpect(jsonPath("$.name").value("Jane Doe"));
     }
 
     @Test
@@ -101,18 +101,18 @@ class UserControllerTests {
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("kandasamy"));
+                .andExpect(jsonPath("$[0].name").value("Jane Doe"));
     }
 
     @Test
     void listUsers_filtersByMobileWhenProvided() throws Exception {
-        when(userService.findByMobileNo("9994722907")).thenReturn(List.of(sampleUserResponse()));
+        when(userService.findByMobileNo("9876543210")).thenReturn(List.of(sampleUserResponse()));
 
-        mockMvc.perform(get("/api/users").param("mobile", "9994722907"))
+        mockMvc.perform(get("/api/users").param("mobile", "9876543210"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].mobileNo").value("9994722907"));
+                .andExpect(jsonPath("$[0].mobileNo").value("9876543210"));
 
-        verify(userService).findByMobileNo("9994722907");
+        verify(userService).findByMobileNo("9876543210");
     }
 
     @Test
@@ -140,12 +140,12 @@ class UserControllerTests {
 
     @Test
     void searchMobileByPrefix_returnsMobilePrefixSearchResponse() throws Exception {
-        when(userService.searchMobileNosByPrefix("99", null))
-                .thenReturn(new MobilePrefixSearchResponse(List.of("9994722907")));
+        when(userService.searchMobileNosByPrefix("98", null))
+                .thenReturn(new MobilePrefixSearchResponse(List.of("9876543210")));
 
-        mockMvc.perform(get("/api/users/search/mobile").param("prefix", "99"))
+        mockMvc.perform(get("/api/users/search/mobile").param("prefix", "98"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mobileNos[0]").value("9994722907"));
+                .andExpect(jsonPath("$.mobileNos[0]").value("9876543210"));
     }
 
     @Test
@@ -162,13 +162,13 @@ class UserControllerTests {
     private static UserResponse sampleUserResponse() {
         UserResponse response = new UserResponse();
         response.setId(1L);
-        response.setName("kandasamy");
-        response.setMobileNo("9994722907");
-        response.setAddressLine("tsr layout");
-        response.setLocality("tiruppur");
-        response.setState("tn");
-        response.setCountry("india");
-        response.setPincode("641607");
+        response.setName("Jane Doe");
+        response.setMobileNo("9876543210");
+        response.setAddressLine("123 Main Street");
+        response.setLocality("Springfield");
+        response.setState("KA");
+        response.setCountry("India");
+        response.setPincode("560001");
         response.setCreatedAt(LocalDateTime.parse("2026-05-31T12:00:00"));
         return response;
     }

@@ -1,7 +1,7 @@
-@baseUrl = http://192.168.29.71:8081
-@userId = 6
-@mobileNo = 9994722907
-@mobilePrefix = 99
+@baseUrl = http://localhost:8081
+@userId = 1
+@mobileNo = 9876543210
+@mobilePrefix = 98
 
 ###
 
@@ -65,13 +65,13 @@ POST {{baseUrl}}/api/users
 Content-Type: application/json
 
 {
-  "name": "kandasamy",
-  "mobileNo": "9994722907",
-  "addressLine": "tsr layout",
-  "locality": "tiruppur",
-  "state": "tn",
-  "country": "india",
-  "pincode": "641607"
+  "name": "Jane Doe",
+  "mobileNo": "9876543210",
+  "addressLine": "123 Main Street",
+  "locality": "Springfield",
+  "state": "KA",
+  "country": "India",
+  "pincode": "560001"
 }
 
 ###
@@ -91,13 +91,13 @@ PUT {{baseUrl}}/api/users/{{userId}}
 Content-Type: application/json
 
 {
-  "name": "kandasamy updated",
-  "mobileNo": "9994722907",
-  "addressLine": "tsr layout",
-  "locality": "tiruppur",
-  "state": "tn",
-  "country": "india",
-  "pincode": "641607"
+  "name": "Jane Doe Updated",
+  "mobileNo": "9876543210",
+  "addressLine": "123 Main Street",
+  "locality": "Springfield",
+  "state": "KA",
+  "country": "India",
+  "pincode": "560001"
 }
 
 ###
@@ -107,13 +107,13 @@ PUT {{baseUrl}}/api/users/999999
 Content-Type: application/json
 
 {
-  "name": "ghost",
-  "mobileNo": "9994722907",
-  "addressLine": "tsr layout",
-  "locality": "tiruppur",
-  "state": "tn",
-  "country": "india",
-  "pincode": "641607"
+  "name": "Ghost User",
+  "mobileNo": "9876543210",
+  "addressLine": "123 Main Street",
+  "locality": "Springfield",
+  "state": "KA",
+  "country": "India",
+  "pincode": "560001"
 }
 
 ###

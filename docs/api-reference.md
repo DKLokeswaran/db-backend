@@ -65,13 +65,13 @@ Request body example:
 
 ```json
 {
-  "name": "kandasamy",
-  "mobileNo": "9994722907",
-  "addressLine": "tsr layout",
-  "locality": "tiruppur",
-  "state": "tn",
-  "country": "india",
-  "pincode": "641607"
+  "name": "Jane Doe",
+  "mobileNo": "9876543210",
+  "addressLine": "123 Main Street",
+  "locality": "Springfield",
+  "state": "KA",
+  "country": "India",
+  "pincode": "560001"
 }
 ```
 
@@ -161,7 +161,7 @@ Success response: `MobilePrefixSearchResponse` object, for example:
 
 ```json
 {
-  "mobileNos": ["9994722907", "9994730123"]
+  "mobileNos": ["9876543210", "9876543211"]
 }
 ```
 

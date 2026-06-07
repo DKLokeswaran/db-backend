@@ -9,7 +9,7 @@ db-backend/
   pom.xml                  Maven build and dependency manifest
   mvnw, mvnw.cmd           Maven Wrapper launchers
   scripts/run-local.sh     Local boot script that loads .env and starts Spring Boot
-  api-testing/user.http    REST Client smoke requests for the user API
+  api-testing/user.http    Ad-hoc REST Client smoke requests (not part of the automated test suite)
   src/main/java/com/lokeswarandk/db_backend/
     DbBackendApplication.java      Boot entry point
     common/ApiResponseBuilder.java  Shared response-map helper
@@ -38,7 +38,7 @@ db-backend/
 - `src/main/resources`: application configuration
 - `src/test/java`: automated tests
 - `src/test/resources`: test configuration (H2 datasource)
-- `api-testing`: manual HTTP request artifacts
+- `api-testing`: ad-hoc REST Client smoke files (not part of the automated test suite)
 - `scripts`: local run helpers
 
 ## Where to Add New Code

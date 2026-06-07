@@ -60,7 +60,9 @@ Production uses PostgreSQL via environment variables; tests do not require a liv
 
 ### `api-testing/user.http`
 
-Manual REST Client file for the user API. Defines `baseUrl`, `userId`, `mobileNo`, and `mobilePrefix`.
+Ad-hoc REST Client smoke file for the user API — **not part of the automated test suite**. Use during development to manually verify endpoints; run `./mvnw test` for CI and local automated coverage.
+
+Defines `baseUrl`, `userId`, `mobileNo`, and `mobilePrefix`. Request bodies use anonymized placeholder data only.
 
 Requests present in the workspace:
 
@@ -97,7 +99,7 @@ Requests present in the workspace:
 
 ## Test Conventions
 
-- File naming: `{Entity}ControllerTests.java`, `{Entity}ServiceTests.java`; `.http` for manual REST requests
+- File naming: `{Entity}ControllerTests.java`, `{Entity}ServiceTests.java`; `api-testing/{resource}.http` for optional manual REST Client smoke requests
 - Controller tests: `@WebMvcTest` with `@MockitoBean` for service dependencies
 - Service tests: plain JUnit 5 + Mockito extension, no Spring context
 - Per-resource minimum: one controller slice test class and one service unit test class (User module establishes the pattern)

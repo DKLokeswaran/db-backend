@@ -4,9 +4,9 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 15 |
+| Total commits | 18 |
 | First commit date | 2026-05-12 |
-| Latest commit date | 2026-06-06 |
+| Latest commit date | 2026-06-07 |
 | Active contributors | 1 |
 | Most active contributor | Lokeswaran DK |
 
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 7 |
+| 2026-06 | 10 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -107,6 +107,20 @@ Top changed files by commit frequency in HEAD history:
 - Refactored `UserController` and `UserService` to use DTOs; services throw `ResourceNotFoundException`.
 - Removed Jakarta validation from the `User` entity (validation lives on request DTOs).
 
+### 2026-06-07: User module automated tests
+
+- Added `UserControllerTests` (`@WebMvcTest` + MockMvc) and `UserServiceTests` (JUnit 5 + Mockito).
+- Expanded `api-testing/user.http` with full CRUD and error-path coverage.
+- Added H2 test datasource config in `src/test/resources/application.yml`; updated `docs/testing.md`.
+
+### 2026-06-07: Cursor IDE rules
+
+- Added `.cursor/rules/` for project overview, testing, formatting, DTO patterns, entity model, error handling, and service/repository conventions.
+
+### 2026-06-07: Repository README
+
+- Added repo-root `README.md` with getting started, API overview, architecture summary, and documentation index.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. Notable API shape changes without an explicit breaking-change tag:
@@ -118,6 +132,9 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `8813c22` | Lokeswaran DK | 2026-06-07 | added readme file |
+| `1df1f44` | Lokeswaran DK | 2026-06-07 | added cursor rules |
+| `dd154f2` | Lokeswaran DK | 2026-06-07 | added unit and slice tests |
 | `5086206` | Lokeswaran DK | 2026-06-06 | added dto layer and mappers for User module |
 | `184af90` | Lokeswaran DK | 2026-06-05 | added logging for exceptions, added genric error message for 500 error code added seperate class for 404 errors |
 | `fe80a08` | Lokeswaran DK | 2026-06-05 | aadded maven spotless plugin,.editorconfig, ran spotless apply and added plan for codebase standardisation |
@@ -138,4 +155,4 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `5086206cba5a6090e4a7cd0eafcd0110b83f9ea8`
+Last Synced Commit: `8813c220b66ba511b371d8e6cae6ddc908971741`
