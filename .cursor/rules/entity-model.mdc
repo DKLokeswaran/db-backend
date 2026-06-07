@@ -1,0 +1,33 @@
+---
+description: Spring Data JDBC entity conventions
+globs: "**/model/**"
+alwaysApply: false
+---
+
+# Entity Model (Persistence Only)
+
+Entities are **not** API contracts. No Jakarta validation on entities used at the API boundary.
+
+## Required patterns
+
+- `@Table("snake_case_table")` from `org.springframework.data.relational.core.mapping.Table`
+- `@Id` from `org.springframework.data.annotation.Id`
+- No-arg constructor with comment: `// Required by Spring Data JDBC for object materialization.`
+- Manual getters/setters (no Lombok)
+- `@Nullable` on optional fields; `@Nullable LocalDateTime createdAt` when column exists
+
+## FK relationships
+
+Use `AggregateReference<RelatedEntity, Long>` — not plain `Long` on entities:
+
+```java
+private AggregateReference<Event, Long> eventId;
+```
+
+Convert from DTO `Long` ids in mapper/service when saving.
+
+## Do not
+
+- Add `@NotBlank` / `@Valid` to entities exposed via REST (put validation on request DTOs)
+- Return entities directly from controllers
+- Use JPA annotations (`@Entity`, `@Column`) — this project uses Spring Data JDBC

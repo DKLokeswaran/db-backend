@@ -1,0 +1,32 @@
+---
+description: EditorConfig and Spotless formatting standards
+globs: "**/*.{java,xml,yml}"
+alwaysApply: false
+---
+
+# Java Formatting
+
+## Rules
+
+- 4-space indent, no tabs (`.editorconfig`)
+- UTF-8, LF line endings, trim trailing whitespace
+- Google Java Format **AOSP style** via Spotless (not Spring Java Format)
+
+## Commands
+
+```bash
+./mvnw spotless:apply   # fix formatting
+./mvnw spotless:check   # verify (runs on verify phase)
+```
+
+## Do
+
+- Run Spotless after editing Java files
+- Match existing import style; Spotless removes unused imports
+- Use `final` utility classes with private constructors for helpers
+
+## Don't
+
+- Use tabs in Java, XML, or YAML
+- Add Spring Java Format config (`.springjavaformatconfig`) — not used in this project
+- Hand-format against Spotless output

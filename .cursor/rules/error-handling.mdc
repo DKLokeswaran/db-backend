@@ -1,0 +1,41 @@
+---
+description: Exception handling and API error envelope conventions
+globs: "**/exception/**,**/common/ApiResponseBuilder.java"
+alwaysApply: false
+---
+
+# Error Handling
+
+## Central handler
+
+All API errors go through `GlobalExceptionHandler` + `ApiResponseBuilder`. Controllers do not catch exceptions for HTTP responses.
+
+| Exception | HTTP | Log level |
+|-----------|------|-----------|
+| `ResourceNotFoundException` | 404 | WARN |
+| `IllegalArgumentException` | 400 | WARN |
+| `MethodArgumentNotValidException` | 400 | DEBUG |
+| `Exception` (catch-all) | 500 | ERROR (stack trace) |
+
+## Envelope shapes
+
+**Standard error:** `timestamp`, `status`, `error`, `message`
+
+**Validation error:** `timestamp`, `status`, `error` (`Validation failed`), `details` (field → message map)
+
+**Delete success:** `ApiResponseBuilder.messagePayload("… deleted successfully", "id", id)`
+
+## Rules
+
+- Never expose raw `ex.getMessage()` on 500 — return `"An unexpected error occurred"`
+- Use `ResourceNotFoundException(error, message)` or `forResourceWithId(resource, id)`
+- Register new domain exceptions in `GlobalExceptionHandler` before the catch-all `Exception` handler
+
+```java
+// GOOD
+log.error("Unexpected error", ex);
+return ApiResponseBuilder.error(INTERNAL_SERVER_ERROR, "Unexpected error", UNEXPECTED_ERROR_MESSAGE);
+
+// BAD
+return ApiResponseBuilder.error(INTERNAL_SERVER_ERROR, "Unexpected error", ex.getMessage());
+```

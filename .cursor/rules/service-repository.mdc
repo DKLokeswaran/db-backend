@@ -1,0 +1,39 @@
+---
+description: Service and repository layer conventions
+globs: "**/service/**,**/repository/**"
+alwaysApply: false
+---
+
+# Service & Repository Patterns
+
+## Service
+
+- `@Service`, constructor-injected repository
+- Accept/return DTOs — map via `{Entity}Mapper` internally
+- Throw `ResourceNotFoundException.forResourceWithId("User", id)` for missing ids
+- Throw `IllegalArgumentException` for invalid query params (use `StringUtils.requireNonBlank`)
+- Set server-managed fields (`id = null`, `createdAt`) in service, not controller
+
+```java
+// GOOD — 404 from service
+public UserResponse findById(Long id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> ResourceNotFoundException.forResourceWithId("User", id));
+    return UserMapper.toResponse(user);
+}
+
+// BAD — Optional to controller for 404
+public Optional<User> findById(Long id) { ... }
+```
+
+## Repository
+
+- Interface extending `CrudRepository<Entity, Long>` + `@Repository`
+- PostgreSQL-specific SQL in `@Query` text blocks (quote reserved table names, e.g. `"user"`)
+- Derived query methods for simple lookups (`findByMobileNo`)
+- FK references on entities: `AggregateReference<RelatedEntity, Long>`
+
+## Not yet adopted
+
+- `@Transactional` (add when multi-step writes appear)
+- Service interfaces (concrete classes until multiple impls needed)

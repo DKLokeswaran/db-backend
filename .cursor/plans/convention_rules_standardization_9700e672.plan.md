@@ -19,10 +19,10 @@ todos:
     status: completed
   - id: docs-sync
     content: Update docs/conventions.md, architecture.md, error-handling.md, structure.md, api-reference.md
-    status: pending
+    status: completed
   - id: cursor-rules
     content: Create 7 focused .mdc rule files under .cursor/rules/ reflecting all standardized patterns
-    status: pending
+    status: completed
 isProject: false
 ---
 

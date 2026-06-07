@@ -1,0 +1,47 @@
+---
+description: Automated and manual API test conventions
+globs: "**/*Tests.java,api-testing/**"
+alwaysApply: false
+---
+
+# Testing Conventions
+
+## Per-resource minimum
+
+| Layer | Class | Approach |
+|-------|-------|----------|
+| Controller | `{Entity}ControllerTests` | `@WebMvcTest` + MockMvc |
+| Service | `{Entity}ServiceTests` | JUnit 5 + `@ExtendWith(MockitoExtension.class)` |
+| Manual | `api-testing/{resource}.http` | REST Client happy + error paths |
+
+## Controller tests (Spring Boot 4)
+
+Requires `spring-boot-starter-webmvc-test` dependency.
+
+```java
+@WebMvcTest(UserController.class)
+@Import(GlobalExceptionHandler.class)
+class UserControllerTests {
+    @Autowired MockMvc mockMvc;
+    @MockitoBean UserService userService;
+}
+```
+
+- Import `GlobalExceptionHandler` to assert error envelopes
+- Mock the service, not the repository
+- Assert DTO JSON shapes (`UserResponse`, `MobilePrefixSearchResponse`)
+
+## Service tests
+
+- `@Mock` repository, `@InjectMocks` service — no Spring context
+- Test `ResourceNotFoundException`, `IllegalArgumentException`, and DTO mapping behavior
+
+## Manual `.http` files
+
+- Variables at top: `@baseUrl`, resource ids
+- Include POST, PUT, GET, DELETE, and expected 400/404 cases
+- Match current DTO request/response shapes
+
+## SQL integration tests
+
+Not used yet. When added, prefer **Testcontainers + PostgreSQL** over H2 for PG-specific SQL.

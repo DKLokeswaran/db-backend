@@ -1,0 +1,42 @@
+---
+description: Controller, DTO, and mapper conventions for the API layer
+globs: "**/controller/**,**/dto/**,**/mapper/**"
+alwaysApply: false
+---
+
+# API & DTO Patterns
+
+## Controller rules
+
+- `@RestController` + `@RequestMapping("/api/{resource-plural}")`
+- Return `ResponseEntity<Object>` — response DTOs on success, `ApiResponseBuilder.messagePayload` on delete
+- `@Valid @RequestBody` on request DTOs; pass query params through to service (no inline validation)
+- No inline 404 handling — services throw `ResourceNotFoundException`
+
+```java
+// GOOD
+@PostMapping
+public ResponseEntity<Object> addUser(@Valid @RequestBody UpsertUserRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
+}
+
+// BAD — entity at API boundary
+@PostMapping
+public ResponseEntity<Object> addUser(@Valid @RequestBody User user) { ... }
+```
+
+## DTO naming
+
+- Request: `Upsert{Entity}Request` when create/update share the same shape; split only when rules diverge
+- Response: `{Entity}Response`; wrap non-entity projections (e.g. `MobilePrefixSearchResponse`)
+- FK fields in DTOs: plain `Long` ids — convert to `AggregateReference` in service/mapper
+
+## Mapper
+
+- Stateless `{Entity}Mapper` utility class in `mapper/`
+- Methods: `toEntity`, `applyFields`, `toResponse`, `toResponseList`
+- No MapStruct/Lombok — manual mapping
+
+## Validation
+
+- Jakarta Bean Validation on **request DTOs only**, not on `model` entities

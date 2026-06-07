@@ -1,0 +1,44 @@
+---
+description: Stack, layered architecture, and where to add new code
+alwaysApply: true
+---
+
+# db-backend Project Overview
+
+Java 17 / Spring Boot 4 / Spring Data JDBC / PostgreSQL layered monolith.
+
+## Package map
+
+| Package | Role |
+|---------|------|
+| `controller` | REST endpoints |
+| `service` | Business orchestration |
+| `repository` | Spring Data JDBC persistence |
+| `dto/request`, `dto/response` | API contracts |
+| `mapper` | Entity ↔ DTO mapping |
+| `model` | Persistence entities (no API validation) |
+| `exception` | `@RestControllerAdvice`, domain exceptions |
+| `common` | Shared utilities (`ApiResponseBuilder`, `StringUtils`) |
+
+## Request flow
+
+`Controller` → `Service` → `Mapper` → `Repository` → PostgreSQL. Controllers never touch entities directly.
+
+## Adding a new resource (copy User module)
+
+1. Entity in `model/` (persistence only)
+2. `{Entity}Repository` extending `CrudRepository`
+3. DTOs in `dto/request` and `dto/response`
+4. `{Entity}Mapper` in `mapper/`
+5. `{Entity}Service` + `{Entity}Controller`
+6. `api-testing/{resource}.http`
+7. `{Entity}ControllerTests` + `{Entity}ServiceTests`
+
+## Conventions
+
+- Constructor injection only; concrete `@Service` classes (no interfaces until needed)
+- API paths: `/api/{resource-plural}`
+- Secrets via env vars (`DB_DATASOURCE_*`); never commit `.env`
+- Format with `./mvnw spotless:apply` before commit
+
+Reference implementation: `UserController`, `UserService`, `UserMapper`, `UpsertUserRequest`, `UserResponse`.
