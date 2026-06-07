@@ -37,7 +37,6 @@ public final class UserMapper {
         response.setState(user.getState());
         response.setCountry(user.getCountry());
         response.setPincode(user.getPincode());
-        response.setCreatedAt(user.getCreatedAt());
         return response;
     }
 

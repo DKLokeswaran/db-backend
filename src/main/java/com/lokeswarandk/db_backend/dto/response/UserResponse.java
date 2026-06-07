@@ -1,7 +1,5 @@
 package com.lokeswarandk.db_backend.dto.response;
 
-import java.time.LocalDateTime;
-
 public class UserResponse {
 
     private Long id;
@@ -12,7 +10,6 @@ public class UserResponse {
     private String state;
     private String country;
     private String pincode;
-    private LocalDateTime createdAt;
 
     public Long getId() {
         return id;
@@ -76,13 +73,5 @@ public class UserResponse {
 
     public void setPincode(String pincode) {
         this.pincode = pincode;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }

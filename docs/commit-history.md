@@ -4,7 +4,7 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 18 |
+| Total commits | 19 |
 | First commit date | 2026-05-12 |
 | Latest commit date | 2026-06-07 |
 | Active contributors | 1 |
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 10 |
+| 2026-06 | 11 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -121,6 +121,10 @@ Top changed files by commit frequency in HEAD history:
 
 - Added repo-root `README.md` with getting started, API overview, architecture summary, and documentation index.
 
+### 2026-06-07: Test data anonymization
+
+- Replaced real-looking names, addresses, and mobile numbers in tests and `api-testing/user.http` with anonymized placeholders.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. Notable API shape changes without an explicit breaking-change tag:
@@ -132,6 +136,7 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `e43a08e` | Lokeswaran DK | 2026-06-07 | test data anonymizing |
 | `8813c22` | Lokeswaran DK | 2026-06-07 | added readme file |
 | `1df1f44` | Lokeswaran DK | 2026-06-07 | added cursor rules |
 | `dd154f2` | Lokeswaran DK | 2026-06-07 | added unit and slice tests |
@@ -155,4 +160,4 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `8813c220b66ba511b371d8e6cae6ddc908971741`
+Last Synced Commit: `e43a08e781a844a1f08d1d782ab4a4554099ce9b`

@@ -47,7 +47,8 @@ Returned on create, read, list, and update.
 | `state` | string | |
 | `country` | string | |
 | `pincode` | string | |
-| `createdAt` | datetime | set by service on create when absent |
+
+`createdAt` is server-managed on the `User` entity but is not included in API responses.
 
 ### Mobile prefix search response (`MobilePrefixSearchResponse`)
 

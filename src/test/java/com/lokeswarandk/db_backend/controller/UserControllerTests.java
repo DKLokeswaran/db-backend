@@ -17,7 +17,6 @@ import com.lokeswarandk.db_backend.dto.response.UserResponse;
 import com.lokeswarandk.db_backend.exception.GlobalExceptionHandler;
 import com.lokeswarandk.db_backend.exception.ResourceNotFoundException;
 import com.lokeswarandk.db_backend.service.UserService;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -169,7 +168,6 @@ class UserControllerTests {
         response.setState("KA");
         response.setCountry("India");
         response.setPincode("560001");
-        response.setCreatedAt(LocalDateTime.parse("2026-05-31T12:00:00"));
         return response;
     }
 }

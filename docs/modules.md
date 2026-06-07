@@ -19,7 +19,7 @@
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
 | `src/main/java/com/lokeswarandk/db_backend/dto/request/UpsertUserRequest.java` | Request DTO | getters/setters for user fields | Jakarta validation for create and update requests. |
-| `src/main/java/com/lokeswarandk/db_backend/dto/response/UserResponse.java` | Response DTO | getters/setters for user fields plus `id`, `createdAt` | Client-facing user shape for CRUD and mobile filter. |
+| `src/main/java/com/lokeswarandk/db_backend/dto/response/UserResponse.java` | Response DTO | getters/setters for user fields plus `id` | Client-facing user shape for CRUD and mobile filter. |
 | `src/main/java/com/lokeswarandk/db_backend/dto/response/MobilePrefixSearchResponse.java` | Response DTO | `mobileNos` | Wraps distinct mobile numbers from prefix search. |
 
 ### Mapping Layer
@@ -136,7 +136,7 @@
 ### `UserResponse`
 
 - Package: `com.lokeswarandk.db_backend.dto.response`
-- Fields: `id`, `name`, `mobileNo`, `addressLine`, `locality`, `state`, `country`, `pincode`, `createdAt`
+- Fields: `id`, `name`, `mobileNo`, `addressLine`, `locality`, `state`, `country`, `pincode`
 
 ### `MobilePrefixSearchResponse`
 
