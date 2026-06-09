@@ -1,0 +1,49 @@
+---
+description: Tiered verification after code changes — run checks via scripts/check.sh
+alwaysApply: true
+---
+
+# Verification Workflow
+
+After editing `src/main/java`, `src/test/java`, `pom.xml`, or `application.yml`, verify changes before finishing the task.
+
+Use [`scripts/check.sh`](scripts/check.sh) — never paste full Maven logs into chat.
+
+## Tiers
+
+| Tier | When | Action |
+|------|------|--------|
+| 0 | Always | `read_lints` on edited files; fix before proceeding |
+| 1 | Java edits | `./scripts/check.sh compile` |
+| 2 | Logic changes | `./scripts/check.sh test <classes>` (see mapping) |
+| 3 | Before done | `./scripts/check.sh verify` |
+
+## File → test mapping
+
+| Edited | Run |
+|--------|-----|
+| `controller/{Entity}Controller.java` | `{Entity}ControllerTests` |
+| `service/{Entity}Service.java` | `{Entity}ServiceTests` |
+| `mapper/{Entity}Mapper.java` | `{Entity}ServiceTests` |
+| `dto/**/{Entity}*` | `{Entity}ControllerTests,{Entity}ServiceTests` |
+| `repository/{Entity}Repository.java` | `{Entity}ServiceTests` |
+| `exception/GlobalExceptionHandler.java`, `common/ApiResponseBuilder.java` | all `*ControllerTests`, `DbBackendApplicationTests` |
+| `pom.xml`, `application.yml`, `DbBackendApplication.java` | skip Tier 2 → run `verify` |
+
+New resource: run both `{Entity}ControllerTests` and `{Entity}ServiceTests` before `verify`.
+
+## Token budget
+
+- **Success:** one-line summary from script output only (e.g. `verify: BUILD SUCCESS, 22 tests, 0 failures`)
+- **Failure:** paste only the script's failure excerpt; fix and re-run the **same** check before broadening scope
+- Do not run raw `./mvnw test` or `./mvnw verify` and dump stdout into chat
+
+## Fix loop
+
+1. Check fails → fix the cause
+2. Re-run the same tier (targeted test, not full verify)
+3. Run `./scripts/check.sh verify` only once targeted checks pass
+
+## Not automated
+
+- `api-testing/*.http` and `scripts/run-local.sh` need live PostgreSQL + `.env` — manual human smoke only

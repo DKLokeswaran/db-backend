@@ -15,13 +15,15 @@ alwaysApply: false
 ## Commands
 
 ```bash
-./mvnw spotless:apply   # fix formatting
-./mvnw spotless:check   # verify (runs on verify phase)
+./mvnw spotless:apply          # fix formatting
+./mvnw spotless:check          # verify (also runs on verify phase)
+./scripts/check.sh spotless    # quiet check with one-line output
 ```
 
 ## Do
 
-- Run Spotless after editing Java files
+- Run Spotless after editing Java files; `./scripts/check.sh spotless` is part of the verification workflow
+- If Spotless fails: run `spotless:apply`, then `spotless:check` (or `check.sh spotless`) — do not hand-fix style
 - Match existing import style; Spotless removes unused imports
 - Use `final` utility classes with private constructors for helpers
 

@@ -48,3 +48,20 @@ Not an automated testing module — optional REST Client files for manually hitt
 ## SQL integration tests
 
 Not used yet. When added, prefer **Testcontainers + PostgreSQL** over H2 for PG-specific SQL.
+
+## Verification commands
+
+Prefer [`scripts/check.sh`](scripts/check.sh) over raw Maven — it captures logs internally and prints a one-line summary.
+
+```bash
+./scripts/check.sh compile
+./scripts/check.sh test UserServiceTests
+./scripts/check.sh test UserControllerTests,UserServiceTests
+./scripts/check.sh verify
+```
+
+- Run **targeted** tests via `check.sh test` after logic changes; run `check.sh verify` before finishing
+- Test class names match source: `UserController` → `UserControllerTests`, `UserService` → `UserServiceTests`
+- Comma-separate multiple classes: `UserControllerTests,UserServiceTests`
+
+See `verification-workflow.mdc` for the full tiered workflow and file → test mapping.

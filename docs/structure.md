@@ -9,6 +9,9 @@ db-backend/
   pom.xml                  Maven build and dependency manifest
   mvnw, mvnw.cmd           Maven Wrapper launchers
   scripts/run-local.sh     Local boot script that loads .env and starts Spring Boot
+  scripts/check.sh         Quiet Maven wrapper (compile, test, spotless, verify); one-line output
+  .cursor/rules/           Cursor IDE rules (.mdc convention and workflow files)
+  .cursor/plans/           Cursor implementation plans (.plan.md)
   api-testing/user.http    Ad-hoc REST Client smoke requests (not part of the automated test suite)
   src/main/java/com/lokeswarandk/db_backend/
     DbBackendApplication.java      Boot entry point
@@ -39,7 +42,9 @@ db-backend/
 - `src/test/java`: automated tests
 - `src/test/resources`: test configuration (H2 datasource)
 - `api-testing`: ad-hoc REST Client smoke files (not part of the automated test suite)
-- `scripts`: local run helpers
+- `scripts`: local run helpers (`run-local.sh`) and quiet Maven verification (`check.sh` — wraps `mvnw` with bounded output for compile, targeted test, spotless, and verify)
+- `.cursor/rules`: Cursor IDE rules (`.mdc` files for project conventions and verification workflow)
+- `.cursor/plans`: Cursor implementation plans (`.plan.md` files; not part of the application runtime)
 
 ## Where to Add New Code
 

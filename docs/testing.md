@@ -106,4 +106,4 @@ Requests present in the workspace:
 
 ## Coverage Notes
 
-The User module has automated controller and service coverage plus expanded manual HTTP examples. Other domain modules still have no automated tests. Run the full suite with `./mvnw test`.
+The User module has automated controller and service coverage plus expanded manual HTTP examples. Other domain modules still have no automated tests. Run the full suite with `./mvnw test`; use `./mvnw verify` to include Spotless checks.

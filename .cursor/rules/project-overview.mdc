@@ -40,5 +40,6 @@ Java 17 / Spring Boot 4 / Spring Data JDBC / PostgreSQL layered monolith.
 - API paths: `/api/{resource-plural}`
 - Secrets via env vars (`DB_DATASOURCE_*`); never commit `.env`
 - Format with `./mvnw spotless:apply` before commit
+- After code changes, follow `verification-workflow` — run `scripts/check.sh` before finishing
 
 Reference implementation: `UserController`, `UserService`, `UserMapper`, `UpsertUserRequest`, `UserResponse`.

@@ -4,7 +4,7 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 19 |
+| Total commits | 20 |
 | First commit date | 2026-05-12 |
 | Latest commit date | 2026-06-07 |
 | Active contributors | 1 |
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 11 |
+| 2026-06 | 12 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -125,17 +125,24 @@ Top changed files by commit frequency in HEAD history:
 
 - Replaced real-looking names, addresses, and mobile numbers in tests and `api-testing/user.http` with anonymized placeholders.
 
+### 2026-06-07: UserResponse shape cleanup
+
+- Removed `createdAt` from `UserResponse` and `UserMapper.toResponse`; field remains on the `User` entity for persistence only.
+- Updated `docs/api-reference.md`, `docs/modules.md`, and controller tests.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. Notable API shape changes without an explicit breaking-change tag:
 
 - Mobile prefix search (`GET /api/users/search/mobile`) now returns `{ "mobileNos": [...] }` instead of a bare string array.
+- `UserResponse` no longer includes `createdAt`; clients must not expect it in create/read/list/update JSON.
 - The switch from Bruno files to `api-testing/user.http` is a tooling change rather than an API contract change.
 
 ## Full Commit Log
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `5aaf977` | Lokeswaran DK | 2026-06-07 | removed createdAt from user response |
 | `e43a08e` | Lokeswaran DK | 2026-06-07 | test data anonymizing |
 | `8813c22` | Lokeswaran DK | 2026-06-07 | added readme file |
 | `1df1f44` | Lokeswaran DK | 2026-06-07 | added cursor rules |
@@ -160,4 +167,4 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `e43a08e781a844a1f08d1d782ab4a4554099ce9b`
+Last Synced Commit: `5aaf9770993bdbb339e66e7bcfbae50855213987`
