@@ -18,6 +18,8 @@
 - Shared helpers live under `common`.
 - Error handlers live under `exception`.
 - Domain entities and enums live under `model`.
+- Spring Security configuration lives under `config` (`SecurityConfig`).
+- Security-specific services live under `security` (`DbUserDetailsService`).
 - Tests live under `src/test/java` using the same package structure as main code.
 - Per-resource test naming: `{Entity}ControllerTests.java` and `{Entity}ServiceTests.java`.
 
@@ -55,7 +57,7 @@ Not found in committed history. The backend is entirely synchronous in its commi
 
 ## Validation and Error Style
 
-- Input is validated with Jakarta Bean Validation on request DTOs (`@Valid` on controller parameters).
+- Input is validated with Jakarta Bean Validation on request DTOs (`@Valid` on controller parameters), including `LoginRequest` for `POST /api/auth/login`.
 - Persistence entities under `model` are mapping targets only for the User module; validation annotations belong on request DTOs.
 - Missing resources are signaled with `ResourceNotFoundException` from the service layer; `GlobalExceptionHandler` maps it to a 404 envelope.
 - Service parameter validation throws `IllegalArgumentException`; the global handler maps it to `400 Bad Request`.

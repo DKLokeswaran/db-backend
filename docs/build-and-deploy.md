@@ -29,9 +29,10 @@ The committed build is Maven-based:
 `src/main/resources/application.yml` sets:
 
 - application name: `db-backend`
-- server port: `8081`
+- server port: `8084`
 - datasource URL, username, and password from environment variables
 - JDBC logging levels for development visibility
+- `org.springframework.security` logging at `TRACE`, which surfaces filter-chain and authentication decisions during local development
 
 ## Environment Variable Catalog
 
@@ -59,4 +60,5 @@ No deploy script, release workflow, Docker image, or cloud manifest is committed
 
 - The local script fails fast if `.env` is missing.
 - The `.env` file is gitignored in committed history.
-- The API test file uses a fixed `baseUrl` pointing at a local network address, so it is environment-specific and not production-safe as committed.
+- The API test files use a fixed `baseUrl` pointing at a local network address, so they are environment-specific and not production-safe as committed.
+- `api-testing/user.http` and `api-testing/auth.http` read `API_USERNAME` and `API_PASSWORD` through the REST Client `$dotenv` variable syntax to log in before calling protected endpoints. These are client-side variables consumed by the REST Client extension only — they are not Spring configuration properties and have no effect on the running application.

@@ -1,0 +1,85 @@
+@baseUrl = http://localhost:8084
+@username = {{$dotenv API_USERNAME}}
+@password = {{$dotenv API_PASSWORD}}
+
+###
+
+# Login — establishes the session cookie (run this FIRST).
+# The REST Client cookie jar resends JSESSIONID on the requests below.
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+###
+
+# Protected endpoint — run BEFORE login (or after server restart) to see 401
+GET {{baseUrl}}/api/users
+
+###
+
+# Protected endpoint — ignores any saved JSESSIONID, even after login (expect 401).
+# @no-cookie-jar forces a fresh client with no session cookie attached.
+# @no-cookie-jar
+GET {{baseUrl}}/api/users
+
+###
+
+# Fresh-session login (does NOT save the returned cookie).
+# Useful to verify credentials without polluting the cookie jar.
+# @no-cookie-jar
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+###
+
+# Login — wrong credentials (expect 401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "wrong-password"
+}
+
+###
+
+# Login — blank fields (expect 400 validation error)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "",
+  "password": ""
+}
+
+###
+
+# Current user — validates the session cookie (run while logged in; expect 200
+# with username + role). Use this to check if the browser's cookie is still valid.
+GET {{baseUrl}}/api/auth/me
+
+###
+
+# Current user — without a session (expect 401, signals an invalid/expired cookie).
+# @no-cookie-jar
+GET {{baseUrl}}/api/auth/me
+
+###
+
+# Logout — clears the session (run while logged in; expect 200).
+POST {{baseUrl}}/api/auth/logout
+
+###
+
+# Logout — without a session (expect 401, since logout requires authentication).
+# @no-cookie-jar
+POST {{baseUrl}}/api/auth/logout

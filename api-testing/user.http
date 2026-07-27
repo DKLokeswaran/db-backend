@@ -1,7 +1,21 @@
-@baseUrl = http://localhost:8081
+@baseUrl = http://localhost:8084
+@username = {{$dotenv API_USERNAME}}
+@password = {{$dotenv API_PASSWORD}}
 @userId = 1
 @mobileNo = 9876543210
 @mobilePrefix = 98
+
+###
+
+# Login — establishes the session cookie (run this FIRST so the requests below
+# are authenticated). Full auth endpoint coverage lives in auth.http.
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
 
 ###
 
@@ -127,3 +141,7 @@ DELETE {{baseUrl}}/api/users/{{userId}}
 DELETE {{baseUrl}}/api/users/999999
 
 ###
+
+# Logout — clears the session (run LAST to end the authenticated session).
+POST {{baseUrl}}/api/auth/logout
+

@@ -2,20 +2,50 @@
 
 ## Overview
 
-The committed REST surface contains one resource group: `/api/users`.
+The committed REST surface contains two resource groups: `/api/auth` for session authentication and `/api/users` for donor/user CRUD. Every `/api/users` endpoint requires an authenticated session established through `/api/auth/login`; only `POST /api/auth/login` is reachable without one.
 
 ## Endpoint Summary
 
+### `/api/auth`
+
 | Method | Path | Purpose | Success | Errors |
 | --- | --- | --- | --- | --- |
-| `POST` | `/api/users` | Create a user | `201 Created` | `400`, `500` |
-| `GET` | `/api/users/{id}` | Fetch one user | `200 OK` | `404`, `500` |
-| `GET` | `/api/users` | List all users, or filter by mobile | `200 OK` | `400`, `500` |
-| `GET` | `/api/users/search/mobile` | Distinct mobile prefix search (typeahead) | `200 OK` | `400`, `500` |
-| `PUT` | `/api/users/{id}` | Replace a user | `200 OK` | `400`, `404`, `500` |
-| `DELETE` | `/api/users/{id}` | Delete a user | `200 OK` | `404`, `500` |
+| `POST` | `/api/auth/login` | Authenticate and start a session | `200 OK` | `400`, `401` |
+| `POST` | `/api/auth/logout` | End the current session | `200 OK` | `401` |
+| `GET` | `/api/auth/me` | Fetch the authenticated caller | `200 OK` | `401` |
+
+### `/api/users`
+
+All endpoints below require an authenticated session (`JSESSIONID` cookie from a prior `POST /api/auth/login`); an unauthenticated request receives `401` before reaching the controller.
+
+| Method | Path | Purpose | Success | Errors |
+| --- | --- | --- | --- | --- |
+| `POST` | `/api/users` | Create a user | `201 Created` | `400`, `401`, `500` |
+| `GET` | `/api/users/{id}` | Fetch one user | `200 OK` | `401`, `404`, `500` |
+| `GET` | `/api/users` | List all users, or filter by mobile | `200 OK` | `400`, `401`, `500` |
+| `GET` | `/api/users/search/mobile` | Distinct mobile prefix search (typeahead) | `200 OK` | `400`, `401`, `500` |
+| `PUT` | `/api/users/{id}` | Replace a user | `200 OK` | `400`, `401`, `404`, `500` |
+| `DELETE` | `/api/users/{id}` | Delete a user | `200 OK` | `401`, `404`, `500` |
 
 ## Shared Schemas
+
+### Login request body (`LoginRequest`)
+
+Used for `POST /api/auth/login`.
+
+| Field | Type | Required | Validation |
+| --- | --- | --- | --- |
+| `username` | string | yes | `@NotBlank` ("Username is required") |
+| `password` | string | yes | `@NotBlank` ("Password is required") |
+
+### Current user response body (`CurrentUserResponse`)
+
+Returned by `POST /api/auth/login` and `GET /api/auth/me`.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `username` | string | authenticated principal name |
+| `role` | string | authority with the `ROLE_` prefix stripped, for example `ADMIN` |
 
 ### User request body (`UpsertUserRequest`)
 
@@ -57,6 +87,78 @@ Returned by `GET /api/users/search/mobile`.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `mobileNos` | string array | distinct mobile numbers matching the prefix |
+
+## Login
+
+`POST /api/auth/login`
+
+Request body example:
+
+```json
+{
+  "username": "admin",
+  "password": "secret"
+}
+```
+
+Behavior:
+
+- Request body is validated with `@Valid` on `LoginRequest`.
+- `AuthController` authenticates the credentials through `AuthenticationManager`, which delegates to `DbUserDetailsService` and the BCrypt-backed `PasswordEncoder`.
+- On success, the resulting `Authentication` is stored in a new `SecurityContext` and persisted via `SecurityContextRepository`, which sets the `JSESSIONID` session cookie on the response.
+
+Responses:
+
+- `200 OK` with a `CurrentUserResponse` object, and a `Set-Cookie: JSESSIONID=...` header
+- `400 Bad Request` when `username` or `password` is blank
+- `401 Unauthorized` when credentials are invalid
+
+401 response shape:
+
+```json
+{
+  "timestamp": "2026-05-31T12:34:56.789",
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "Invalid username or password"
+}
+```
+
+## Logout
+
+`POST /api/auth/logout`
+
+Behavior:
+
+- Requires an authenticated session.
+- Invalidates the session and clears the security context via `SecurityContextLogoutHandler`.
+
+Success response shape:
+
+```json
+{
+  "message": "Logout successful"
+}
+```
+
+Responses:
+
+- `200 OK` with the message payload
+- `401 Unauthorized` when the caller has no valid session
+
+## Get Current User
+
+`GET /api/auth/me`
+
+Behavior:
+
+- Requires an authenticated session.
+- Returns the same `CurrentUserResponse` shape as login, derived from the current `Authentication`.
+
+Responses:
+
+- `200 OK` with a `CurrentUserResponse`
+- `401 Unauthorized` when the caller has no valid session
 
 ## Create User
 
@@ -262,4 +364,8 @@ Uncaught exceptions are handled by `GlobalExceptionHandler.handleGenericExceptio
 
 ## Auth and Permissions
 
-Not found in committed history. The exposed endpoints do not have auth annotations, guards, or middleware in HEAD.
+- Authentication is a server-side session cookie (`JSESSIONID`), established by `POST /api/auth/login` and enforced by `SecurityConfig`'s `SecurityFilterChain`.
+- Only `POST /api/auth/login` is `permitAll()`; every other endpoint, including all of `/api/users`, requires an authenticated session.
+- There is no per-role authorization yet — any authenticated `ControllerAccount` (role `ROLE_{role}`) can call any protected endpoint.
+- CSRF protection is disabled (`csrf().disable()`), so no CSRF token is required on state-changing requests.
+- Requests without a valid session that hit a protected endpoint are rejected by the filter chain's `HttpStatusEntryPoint` before reaching a controller, which returns a bare `401` status that may have no JSON body. Only `AuthenticationException`s raised from inside a controller method (for example, a failed login) go through `GlobalExceptionHandler` and get the full JSON error envelope shown above.

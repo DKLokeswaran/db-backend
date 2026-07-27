@@ -4,9 +4,9 @@
 
 | Metric | Value |
 | --- | --- |
-| Total commits | 20 |
+| Total commits | 21 |
 | First commit date | 2026-05-12 |
-| Latest commit date | 2026-06-07 |
+| Latest commit date | 2026-06-09 |
 | Active contributors | 1 |
 | Most active contributor | Lokeswaran DK |
 
@@ -14,7 +14,7 @@
 
 | Month | Commits |
 | --- | --- |
-| 2026-06 | 12 |
+| 2026-06 | 13 |
 | 2026-05 | 8 |
 
 ## Hotspots
@@ -130,6 +130,11 @@ Top changed files by commit frequency in HEAD history:
 - Removed `createdAt` from `UserResponse` and `UserMapper.toResponse`; field remains on the `User` entity for persistence only.
 - Updated `docs/api-reference.md`, `docs/modules.md`, and controller tests.
 
+### 2026-06-09: Agent verification workflow tooling
+
+- Added `scripts/check.sh` to capture Maven compile/test/verify output internally and print a one-line summary for agentic workflows.
+- Added `.cursor/rules/verification-workflow.mdc` and extended testing/project-overview/java-formatting rules for tiered verification via `check.sh`.
+
 ## Breaking Changes
 
 No commit message explicitly marks a breaking change. Notable API shape changes without an explicit breaking-change tag:
@@ -142,6 +147,7 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 | Hash | Author | Date | Message |
 | --- | --- | --- | --- |
+| `4d659a7` | Lokeswaran DK | 2026-06-09 | added script and cursor rules to format terminal outputs token effciently for agentic workflows |
 | `5aaf977` | Lokeswaran DK | 2026-06-07 | removed createdAt from user response |
 | `e43a08e` | Lokeswaran DK | 2026-06-07 | test data anonymizing |
 | `8813c22` | Lokeswaran DK | 2026-06-07 | added readme file |
@@ -167,4 +173,4 @@ No commit message explicitly marks a breaking change. Notable API shape changes 
 
 No tags or releases were found in committed history.
 
-Last Synced Commit: `5aaf9770993bdbb339e66e7bcfbae50855213987`
+Last Synced Commit: `4d659a7ba4e60a9acd3e78519a4113f794f768b8`

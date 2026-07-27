@@ -13,24 +13,32 @@ db-backend/
   .cursor/rules/           Cursor IDE rules (.mdc convention and workflow files)
   .cursor/plans/           Cursor implementation plans (.plan.md)
   api-testing/user.http    Ad-hoc REST Client smoke requests (not part of the automated test suite)
+  api-testing/auth.http    Ad-hoc REST Client smoke requests for login/logout/me
   src/main/java/com/lokeswarandk/db_backend/
     DbBackendApplication.java      Boot entry point
     common/ApiResponseBuilder.java  Shared response-map helper
     common/StringUtils.java         Shared string validation helper
+    config/SecurityConfig.java      Spring Security filter chain and auth beans
     controller/UserController.java  User CRUD endpoints
+    controller/AuthController.java  Login, logout, and current-user endpoints
     service/UserService.java        User CRUD service orchestration
     dto/request/UpsertUserRequest.java  User create/update request DTO
+    dto/request/LoginRequest.java       Login request DTO
     dto/response/UserResponse.java      User API response DTO
     dto/response/MobilePrefixSearchResponse.java  Mobile typeahead response DTO
+    dto/response/CurrentUserResponse.java         Authenticated user response DTO
     mapper/UserMapper.java          User entity/DTO mapping
     exception/GlobalExceptionHandler.java  Global validation and error advice
     exception/ResourceNotFoundException.java  Domain not-found runtime exception
-    model/                          Domain entities and enums
+    model/                          Domain entities and enums, including ControllerAccount
     repository/UserRepository.java  Spring Data repository
-  src/main/resources/application.yml  Datasource and server configuration
+    repository/ControllerAccountRepository.java  Controller account lookup repository
+    security/DbUserDetailsService.java  Loads ControllerAccount for authentication
+  src/main/resources/application.yml  Datasource, server, and security logging configuration
   src/test/java/com/lokeswarandk/db_backend/
     DbBackendApplicationTests.java   Spring context smoke test
-    controller/UserControllerTests.java  User API web slice tests
+    controller/UserControllerTests.java  User API web slice tests (secured)
+    controller/AuthControllerTests.java  Auth API web slice tests
     service/UserServiceTests.java    User service unit tests
   src/test/resources/application.yml  H2 in-memory test datasource config
 ```
