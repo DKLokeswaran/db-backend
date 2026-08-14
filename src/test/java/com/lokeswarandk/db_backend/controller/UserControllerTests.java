@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,6 +71,7 @@ class UserControllerTests {
 
         mockMvc.perform(
                         post("/api/users")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(VALID_USER_JSON))
                 .andExpect(status().isCreated())
@@ -82,6 +84,7 @@ class UserControllerTests {
     void addUser_returns400WhenValidationFails() throws Exception {
         mockMvc.perform(
                         post("/api/users")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest())
@@ -138,6 +141,7 @@ class UserControllerTests {
 
         mockMvc.perform(
                         put("/api/users/1")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(VALID_USER_JSON))
                 .andExpect(status().isOk())
@@ -146,7 +150,7 @@ class UserControllerTests {
 
     @Test
     void deleteUser_returns200WithMessagePayload() throws Exception {
-        mockMvc.perform(delete("/api/users/1"))
+        mockMvc.perform(delete("/api/users/1").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User deleted successfully"))
                 .andExpect(jsonPath("$.id").value(1));

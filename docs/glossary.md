@@ -22,8 +22,9 @@
 | `DB` | database | Appears in environment variable names and package name. |
 | `ID` | identifier | Used in aggregate-reference field names. |
 | `API` | application programming interface | Used in documentation and endpoint paths. |
-| `JSESSIONID` | Java Servlet session cookie name | Set on `POST /api/auth/login`; identifies the authenticated HTTP session via `HttpSessionSecurityContextRepository`. |
-| `CSRF` | cross-site request forgery | Explicitly disabled in `SecurityConfig`. |
+| `JSESSIONID` | Java Servlet session cookie name | Set on `POST /api/auth/login`; identifies the authenticated HTTP session via `HttpSessionSecurityContextRepository`. HttpOnly, SameSite=Lax. |
+| `XSRF-TOKEN` | CSRF cookie name | Readable cookie issued by `GET /api/auth/csrf` via `CookieCsrfTokenRepository`; clients copy it into header `X-XSRF-TOKEN`. SameSite=Lax. |
+| `CSRF` | cross-site request forgery | Mitigated with cookie-to-header CSRF (`CookieCsrfTokenRepository` + `CsrfTokenRequestAttributeHandler`). |
 | `BCrypt` | Blowfish-based password hashing algorithm | Used by `BCryptPasswordEncoder` to hash and verify `ControllerAccount` passwords. |
 
 ## Status and Enum Values
@@ -43,6 +44,7 @@
 
 - `session`: server-side authenticated state tied to the `JSESSIONID` cookie, created on login and destroyed on logout
 - `role`: raw string stored on `ControllerAccount.role`; exposed as the Spring Security authority `ROLE_{role}` and returned to clients with the prefix stripped
+- `CSRF token`: value in the `XSRF-TOKEN` cookie; must be echoed as `X-XSRF-TOKEN` on unsafe HTTP methods
 
 ## Business Process Terms
 

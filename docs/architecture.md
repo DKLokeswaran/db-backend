@@ -17,15 +17,16 @@ The committed backend is a small layered monolith:
 
 Request flow in the workspace is:
 
-1. Every HTTP request first passes through the Spring Security filter chain defined in `SecurityConfig`. `POST /api/auth/login` is `permitAll()`; every other request must carry a valid session (`JSESSIONID`) or is rejected with `401` by the `HttpStatusEntryPoint` before reaching a controller.
-2. For `/api/auth/login`, `AuthController` authenticates credentials through `AuthenticationManager`, which uses `DbUserDetailsService` to load a `ControllerAccount` and the `BCryptPasswordEncoder` to verify the password; on success the `Authentication` is stored via `SecurityContextRepository` and the session cookie is set on the response.
-3. For authenticated requests, `UserController` receives the HTTP request.
-4. Bean Validation runs on `UpsertUserRequest` bodies annotated with `@Valid`.
-5. The controller delegates to `UserService`, which works with entities internally.
-6. `UserMapper` converts between request/response DTOs and `User` entities.
-7. `UserService` calls `UserRepository` for persistence operations.
-8. Spring Data JDBC persists or fetches entities from PostgreSQL.
-9. Missing users throw `ResourceNotFoundException`; other errors, including `AuthenticationException`, are shaped by `GlobalExceptionHandler` and `ApiResponseBuilder`.
+1. Every HTTP request first passes through the Spring Security filter chain defined in `SecurityConfig`. `POST /api/auth/login` and `GET /api/auth/csrf` are `permitAll()`; every other request must carry a valid session (`JSESSIONID`) or is rejected with `401` by the `HttpStatusEntryPoint` before reaching a controller. Unsafe methods are also checked by `CsrfFilter` (cookie `XSRF-TOKEN` vs header `X-XSRF-TOKEN`); failures return `403`.
+2. For `/api/auth/csrf`, `AuthController` writes the `XSRF-TOKEN` cookie via `CookieCsrfTokenRepository.saveToken`.
+3. For `/api/auth/login`, `AuthController` authenticates credentials through `AuthenticationManager`, which uses `DbUserDetailsService` to load a `ControllerAccount` and the `BCryptPasswordEncoder` to verify the password; on success the `Authentication` is stored via `SecurityContextRepository` and the session cookie is set on the response.
+4. For authenticated requests, `UserController` receives the HTTP request.
+5. Bean Validation runs on `UpsertUserRequest` bodies annotated with `@Valid`.
+6. The controller delegates to `UserService`, which works with entities internally.
+7. `UserMapper` converts between request/response DTOs and `User` entities.
+8. `UserService` calls `UserRepository` for persistence operations.
+9. Spring Data JDBC persists or fetches entities from PostgreSQL.
+10. Missing users throw `ResourceNotFoundException`; other errors, including `AuthenticationException`, are shaped by `GlobalExceptionHandler` and `ApiResponseBuilder`.
 
 ## Layer Diagram
 

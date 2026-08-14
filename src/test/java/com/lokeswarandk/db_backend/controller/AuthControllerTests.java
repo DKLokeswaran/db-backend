@@ -2,9 +2,11 @@ package com.lokeswarandk.db_backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -51,6 +53,13 @@ class AuthControllerTests {
     }
 
     @Test
+    void csrf_returns204AndSetsTokenCookie() throws Exception {
+        mockMvc.perform(get("/api/auth/csrf"))
+                .andExpect(status().isNoContent())
+                .andExpect(cookie().exists("XSRF-TOKEN"));
+    }
+
+    @Test
     void login_returns200WhenCredentialsValid() throws Exception {
         when(authenticationManager.authenticate(any()))
                 .thenReturn(
@@ -59,11 +68,21 @@ class AuthControllerTests {
 
         mockMvc.perform(
                         post("/api/auth/login")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(VALID_LOGIN_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("admin"))
                 .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void login_returns403WhenCsrfTokenMissing() throws Exception {
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(VALID_LOGIN_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -73,6 +92,7 @@ class AuthControllerTests {
 
         mockMvc.perform(
                         post("/api/auth/login")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(VALID_LOGIN_JSON))
                 .andExpect(status().isUnauthorized())
@@ -84,6 +104,7 @@ class AuthControllerTests {
     void login_returns400WhenValidationFails() throws Exception {
         mockMvc.perform(
                         post("/api/auth/login")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"username\":\"\",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest())
@@ -92,10 +113,11 @@ class AuthControllerTests {
 
     @Test
     @WithMockUser
-    void logout_returns200() throws Exception {
-        mockMvc.perform(post("/api/auth/logout"))
+    void logout_returns200AndClearsCsrfCookie() throws Exception {
+        mockMvc.perform(post("/api/auth/logout").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Logout successful"));
+                .andExpect(jsonPath("$.message").value("Logout successful"))
+                .andExpect(cookie().maxAge("XSRF-TOKEN", 0));
     }
 
     @Test

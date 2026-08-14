@@ -7,10 +7,28 @@
 
 ###
 
-# Login — establishes the session cookie (run this FIRST so the requests below
+# CSRF bootstrap — issues XSRF-TOKEN cookie (run FIRST).
+# Captures the token into csrfToken for X-XSRF-TOKEN on later requests (httpYac).
+GET {{baseUrl}}/api/auth/csrf
+
+{{
+  const setCookie = response.headers['set-cookie'] ?? response.headers['Set-Cookie'];
+  const cookies = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+  const raw = cookies.find((c) => /(?:^|,\s*)XSRF-TOKEN=/i.test(String(c)));
+  const match = raw && /(?:^|,\s*)XSRF-TOKEN=([^;]+)/i.exec(String(raw));
+  if (!match) {
+    throw new Error('XSRF-TOKEN cookie missing from CSRF bootstrap response');
+  }
+  exports.csrfToken = decodeURIComponent(match[1]);
+}}
+
+###
+
+# Login — establishes the session cookie (run after CSRF so requests below
 # are authenticated). Full auth endpoint coverage lives in auth.http.
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "username": "{{username}}",
@@ -77,6 +95,7 @@ GET {{baseUrl}}/api/users?mobile=0000000000
 # Add User (UpsertUserRequest body → UserResponse)
 POST {{baseUrl}}/api/users
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "name": "Jane Doe",
@@ -93,6 +112,7 @@ Content-Type: application/json
 # Add User — validation error (expect 400)
 POST {{baseUrl}}/api/users
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "name": ""
@@ -103,6 +123,7 @@ Content-Type: application/json
 # Update User (UpsertUserRequest body → UserResponse)
 PUT {{baseUrl}}/api/users/{{userId}}
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "name": "Jane Doe Updated",
@@ -119,6 +140,7 @@ Content-Type: application/json
 # Update User — not found (expect 404)
 PUT {{baseUrl}}/api/users/999999
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "name": "Ghost User",
@@ -134,14 +156,16 @@ Content-Type: application/json
 
 # Delete User
 DELETE {{baseUrl}}/api/users/{{userId}}
+X-XSRF-TOKEN: {{csrfToken}}
 
 ###
 
 # Delete User — not found (expect 404)
 DELETE {{baseUrl}}/api/users/999999
+X-XSRF-TOKEN: {{csrfToken}}
 
 ###
 
-# Logout — clears the session (run LAST to end the authenticated session).
+# Logout — clears the session and XSRF-TOKEN cookie (run LAST).
 POST {{baseUrl}}/api/auth/logout
-
+X-XSRF-TOKEN: {{csrfToken}}

@@ -7,6 +7,11 @@ spring:
     password: ${DB_DATASOURCE_PASSWORD}
 server:
   port: 8084
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true
 
 logging:
   level:

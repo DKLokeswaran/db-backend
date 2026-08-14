@@ -15,6 +15,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -42,10 +44,28 @@ public class SecurityConfig {
     }
 
     @Bean
+    CookieCsrfTokenRepository cookieCsrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+        return repository;
+    }
+
+    @Bean
+    CsrfTokenRequestAttributeHandler csrfTokenRequestAttributeHandler() {
+        return new CsrfTokenRequestAttributeHandler();
+    }
+
+    @Bean
     SecurityFilterChain securityFilterChain(
-            HttpSecurity http, SecurityContextRepository securityContextRepository)
+            HttpSecurity http,
+            SecurityContextRepository securityContextRepository,
+            CookieCsrfTokenRepository cookieCsrfTokenRepository,
+            CsrfTokenRequestAttributeHandler csrfTokenRequestAttributeHandler)
             throws Exception {
-        return http.csrf(csrf -> csrf.disable())
+        return http.csrf(
+                        csrf ->
+                                csrf.csrfTokenRepository(cookieCsrfTokenRepository)
+                                        .csrfTokenRequestHandler(csrfTokenRequestAttributeHandler))
                 .formLogin(form -> form.disable())
                 .securityContext(
                         context -> context.securityContextRepository(securityContextRepository))
@@ -56,6 +76,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth ->
                                 auth.requestMatchers(HttpMethod.POST, "/api/auth/login")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/api/auth/csrf")
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated())

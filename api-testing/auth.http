@@ -4,10 +4,28 @@
 
 ###
 
-# Login — establishes the session cookie (run this FIRST).
-# The REST Client cookie jar resends JSESSIONID on the requests below.
+# CSRF bootstrap — issues XSRF-TOKEN cookie (run before any state-changing request).
+# Captures the token into csrfToken for X-XSRF-TOKEN on later requests (httpYac).
+GET {{baseUrl}}/api/auth/csrf
+
+{{
+  const setCookie = response.headers['set-cookie'] ?? response.headers['Set-Cookie'];
+  const cookies = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+  const raw = cookies.find((c) => /(?:^|,\s*)XSRF-TOKEN=/i.test(String(c)));
+  const match = raw && /(?:^|,\s*)XSRF-TOKEN=([^;]+)/i.exec(String(raw));
+  if (!match) {
+    throw new Error('XSRF-TOKEN cookie missing from CSRF bootstrap response');
+  }
+  exports.csrfToken = decodeURIComponent(match[1]);
+}}
+
+###
+
+# Login — establishes the session cookie (run after CSRF bootstrap).
+# The cookie jar resends JSESSIONID and XSRF-TOKEN on the requests below.
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "username": "{{username}}",
@@ -30,9 +48,11 @@ GET {{baseUrl}}/api/users
 
 # Fresh-session login (does NOT save the returned cookie).
 # Useful to verify credentials without polluting the cookie jar.
+# Requires a CSRF token from a prior GET /api/auth/csrf (header only; cookie jar skipped).
 # @no-cookie-jar
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "username": "{{username}}",
@@ -44,6 +64,7 @@ Content-Type: application/json
 # Login — wrong credentials (expect 401)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "username": "{{username}}",
@@ -55,10 +76,22 @@ Content-Type: application/json
 # Login — blank fields (expect 400 validation error)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
 
 {
   "username": "",
   "password": ""
+}
+
+###
+
+# Login — missing CSRF (expect 403)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
 }
 
 ###
@@ -75,11 +108,13 @@ GET {{baseUrl}}/api/auth/me
 
 ###
 
-# Logout — clears the session (run while logged in; expect 200).
+# Logout — clears the session and XSRF-TOKEN cookie (run while logged in; expect 200).
 POST {{baseUrl}}/api/auth/logout
+X-XSRF-TOKEN: {{csrfToken}}
 
 ###
 
 # Logout — without a session (expect 401, since logout requires authentication).
 # @no-cookie-jar
 POST {{baseUrl}}/api/auth/logout
+X-XSRF-TOKEN: {{csrfToken}}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The committed REST surface contains two resource groups: `/api/auth` for session authentication and `/api/users` for donor/user CRUD. Every `/api/users` endpoint requires an authenticated session established through `/api/auth/login`; only `POST /api/auth/login` is reachable without one.
+The committed REST surface contains two resource groups: `/api/auth` for session authentication and CSRF bootstrap, and `/api/users` for donor/user CRUD. Every `/api/users` endpoint requires an authenticated session established through `/api/auth/login`. Public endpoints are `POST /api/auth/login` and `GET /api/auth/csrf`. State-changing methods also require a valid CSRF header (`X-XSRF-TOKEN`) matching the `XSRF-TOKEN` cookie.
 
 ## Endpoint Summary
 
@@ -10,8 +10,9 @@ The committed REST surface contains two resource groups: `/api/auth` for session
 
 | Method | Path | Purpose | Success | Errors |
 | --- | --- | --- | --- | --- |
-| `POST` | `/api/auth/login` | Authenticate and start a session | `200 OK` | `400`, `401` |
-| `POST` | `/api/auth/logout` | End the current session | `200 OK` | `401` |
+| `GET` | `/api/auth/csrf` | Issue/refresh the `XSRF-TOKEN` cookie | `204 No Content` | — |
+| `POST` | `/api/auth/login` | Authenticate and start a session | `200 OK` | `400`, `401`, `403` |
+| `POST` | `/api/auth/logout` | End the current session and clear CSRF cookie | `200 OK` | `401`, `403` |
 | `GET` | `/api/auth/me` | Fetch the authenticated caller | `200 OK` | `401` |
 
 ### `/api/users`
@@ -20,12 +21,12 @@ All endpoints below require an authenticated session (`JSESSIONID` cookie from a
 
 | Method | Path | Purpose | Success | Errors |
 | --- | --- | --- | --- | --- |
-| `POST` | `/api/users` | Create a user | `201 Created` | `400`, `401`, `500` |
+| `POST` | `/api/users` | Create a user | `201 Created` | `400`, `401`, `403`, `500` |
 | `GET` | `/api/users/{id}` | Fetch one user | `200 OK` | `401`, `404`, `500` |
 | `GET` | `/api/users` | List all users, or filter by mobile | `200 OK` | `400`, `401`, `500` |
 | `GET` | `/api/users/search/mobile` | Distinct mobile prefix search (typeahead) | `200 OK` | `400`, `401`, `500` |
-| `PUT` | `/api/users/{id}` | Replace a user | `200 OK` | `400`, `401`, `404`, `500` |
-| `DELETE` | `/api/users/{id}` | Delete a user | `200 OK` | `401`, `404`, `500` |
+| `PUT` | `/api/users/{id}` | Replace a user | `200 OK` | `400`, `401`, `403`, `404`, `500` |
+| `DELETE` | `/api/users/{id}` | Delete a user | `200 OK` | `401`, `403`, `404`, `500` |
 
 ## Shared Schemas
 
@@ -88,6 +89,18 @@ Returned by `GET /api/users/search/mobile`.
 | --- | --- | --- |
 | `mobileNos` | string array | distinct mobile numbers matching the prefix |
 
+## CSRF bootstrap
+
+`GET /api/auth/csrf`
+
+Behavior:
+
+- Public (`permitAll`). No request body.
+- `AuthController` receives the request-scoped `CsrfToken` and calls `CookieCsrfTokenRepository.saveToken` so the response includes `Set-Cookie: XSRF-TOKEN=...; SameSite=Lax` (readable by JavaScript).
+- Returns `204 No Content`.
+
+Clients must call this (or otherwise obtain `XSRF-TOKEN`) before any state-changing request, then send the same value as header `X-XSRF-TOKEN`.
+
 ## Login
 
 `POST /api/auth/login`
@@ -103,6 +116,7 @@ Request body example:
 
 Behavior:
 
+- Requires CSRF: header `X-XSRF-TOKEN` must match the `XSRF-TOKEN` cookie (otherwise `403`).
 - Request body is validated with `@Valid` on `LoginRequest`.
 - `AuthController` authenticates the credentials through `AuthenticationManager`, which delegates to `DbUserDetailsService` and the BCrypt-backed `PasswordEncoder`.
 - On success, the resulting `Authentication` is stored in a new `SecurityContext` and persisted via `SecurityContextRepository`, which sets the `JSESSIONID` session cookie on the response.
@@ -112,6 +126,7 @@ Responses:
 - `200 OK` with a `CurrentUserResponse` object, and a `Set-Cookie: JSESSIONID=...` header
 - `400 Bad Request` when `username` or `password` is blank
 - `401 Unauthorized` when credentials are invalid
+- `403 Forbidden` when the CSRF header is missing or does not match
 
 401 response shape:
 
@@ -130,8 +145,9 @@ Responses:
 
 Behavior:
 
-- Requires an authenticated session.
+- Requires an authenticated session and a valid CSRF header (`X-XSRF-TOKEN`).
 - Invalidates the session and clears the security context via `SecurityContextLogoutHandler`.
+- Clears the `XSRF-TOKEN` cookie via `CookieCsrfTokenRepository.saveToken(null, ...)`.
 
 Success response shape:
 
@@ -145,6 +161,7 @@ Responses:
 
 - `200 OK` with the message payload
 - `401 Unauthorized` when the caller has no valid session
+- `403 Forbidden` when the CSRF header is missing or does not match
 
 ## Get Current User
 
@@ -365,7 +382,7 @@ Uncaught exceptions are handled by `GlobalExceptionHandler.handleGenericExceptio
 ## Auth and Permissions
 
 - Authentication is a server-side session cookie (`JSESSIONID`), established by `POST /api/auth/login` and enforced by `SecurityConfig`'s `SecurityFilterChain`.
-- Only `POST /api/auth/login` is `permitAll()`; every other endpoint, including all of `/api/users`, requires an authenticated session.
+- `POST /api/auth/login` and `GET /api/auth/csrf` are `permitAll()`; every other endpoint, including all of `/api/users`, requires an authenticated session.
 - There is no per-role authorization yet — any authenticated `ControllerAccount` (role `ROLE_{role}`) can call any protected endpoint.
-- CSRF protection is disabled (`csrf().disable()`), so no CSRF token is required on state-changing requests.
+- CSRF is enabled: unsafe methods must send `X-XSRF-TOKEN` matching the `XSRF-TOKEN` cookie (issued by `GET /api/auth/csrf`). Failures return `403` from `CsrfFilter` before the controller runs.
 - Requests without a valid session that hit a protected endpoint are rejected by the filter chain's `HttpStatusEntryPoint` before reaching a controller, which returns a bare `401` status that may have no JSON body. Only `AuthenticationException`s raised from inside a controller method (for example, a failed login) go through `GlobalExceptionHandler` and get the full JSON error envelope shown above.

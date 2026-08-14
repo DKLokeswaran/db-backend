@@ -13,14 +13,14 @@ db-backend/
   .cursor/rules/           Cursor IDE rules (.mdc convention and workflow files)
   .cursor/plans/           Cursor implementation plans (.plan.md)
   api-testing/user.http    Ad-hoc REST Client smoke requests (not part of the automated test suite)
-  api-testing/auth.http    Ad-hoc REST Client smoke requests for login/logout/me
+  api-testing/auth.http    Ad-hoc REST Client smoke requests for CSRF, login/logout/me
   src/main/java/com/lokeswarandk/db_backend/
     DbBackendApplication.java      Boot entry point
     common/ApiResponseBuilder.java  Shared response-map helper
     common/StringUtils.java         Shared string validation helper
-    config/SecurityConfig.java      Spring Security filter chain and auth beans
+    config/SecurityConfig.java      Spring Security filter chain, CSRF, and auth beans
     controller/UserController.java  User CRUD endpoints
-    controller/AuthController.java  Login, logout, and current-user endpoints
+    controller/AuthController.java  CSRF bootstrap, login, logout, and current-user endpoints
     service/UserService.java        User CRUD service orchestration
     dto/request/UpsertUserRequest.java  User create/update request DTO
     dto/request/LoginRequest.java       Login request DTO
@@ -34,11 +34,11 @@ db-backend/
     repository/UserRepository.java  Spring Data repository
     repository/ControllerAccountRepository.java  Controller account lookup repository
     security/DbUserDetailsService.java  Loads ControllerAccount for authentication
-  src/main/resources/application.yml  Datasource, server, and security logging configuration
+  src/main/resources/application.yml  Datasource, server session cookie, and security logging configuration
   src/test/java/com/lokeswarandk/db_backend/
     DbBackendApplicationTests.java   Spring context smoke test
-    controller/UserControllerTests.java  User API web slice tests (secured)
-    controller/AuthControllerTests.java  Auth API web slice tests
+    controller/UserControllerTests.java  User API web slice tests (secured, CSRF on mutations)
+    controller/AuthControllerTests.java  Auth API web slice tests (CSRF bootstrap and validation)
     service/UserServiceTests.java    User service unit tests
   src/test/resources/application.yml  H2 in-memory test datasource config
 ```

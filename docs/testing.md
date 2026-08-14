@@ -70,8 +70,9 @@ Production uses PostgreSQL via environment variables; tests do not require a liv
 - Mocking: `@MockitoBean AuthenticationManager`
 - Setup: same `springSecurity()`-backed `MockMvc` construction as `UserControllerTests`
 - Coverage:
-  - `POST /api/auth/login` — `200` with `CurrentUserResponse` (`username`, `role`) on valid credentials; `401` with the fixed `Invalid username or password` envelope on `BadCredentialsException`; `400` with `Validation failed` on blank fields
-  - `POST /api/auth/logout` — `200` with `Logout successful` message (as `@WithMockUser`)
+  - `GET /api/auth/csrf` — `204` and `XSRF-TOKEN` cookie present
+  - `POST /api/auth/login` — `200` with `CurrentUserResponse` (`username`, `role`) on valid credentials (with `.with(csrf())`); `401` with the fixed `Invalid username or password` envelope on `BadCredentialsException`; `400` with `Validation failed` on blank fields; `403` when CSRF is missing
+  - `POST /api/auth/logout` — `200` with `Logout successful` message and CSRF cookie max-age `0` (as `@WithMockUser`, with `.with(csrf())`)
   - `GET /api/auth/me` — `200` with `CurrentUserResponse` (as `@WithMockUser(username = "admin", roles = {"ADMIN"})`); `401` when unauthenticated
 
 ### `src/test/java/com/lokeswarandk/db_backend/service/UserServiceTests.java`
@@ -91,13 +92,14 @@ Production uses PostgreSQL via environment variables; tests do not require a liv
 
 ### `api-testing/user.http`
 
-Ad-hoc REST Client smoke file for the user API — **not part of the automated test suite**. Use during development to manually verify endpoints; run `./mvnw test` for CI and local automated coverage.
+Ad-hoc httpYac smoke file for the user API — **not part of the automated test suite**. Use during development to manually verify endpoints; run `./mvnw test` for CI and local automated coverage.
 
 Defines `baseUrl` (`http://localhost:8084`), `username`/`password` (via `{{$dotenv API_USERNAME}}` / `{{$dotenv API_PASSWORD}}`), `userId`, `mobileNo`, and `mobilePrefix`. Request bodies use anonymized placeholder data only.
 
 Requests present in the workspace:
 
-- `POST /api/auth/login` — logs in first so the session cookie authenticates every request below (full auth coverage lives in `auth.http`)
+- `GET /api/auth/csrf` — issues `XSRF-TOKEN` and a post-request script exports `csrfToken` for later `X-XSRF-TOKEN` headers
+- `POST /api/auth/login` with `X-XSRF-TOKEN` — logs in first so the session cookie authenticates every request below (full auth coverage lives in `auth.http`)
 - `GET /api/users/{userId}` — fetch one `UserResponse`
 - `GET /api/users/999999` — expect `404`
 - `GET /api/users` — list all users
@@ -107,28 +109,30 @@ Requests present in the workspace:
 - `GET /api/users/search/mobile?prefix=9` — expect `400` for short prefix
 - `GET /api/users/search/mobile` — expect `400` for missing prefix
 - `GET /api/users?mobile=0000000000` — expect `200` with empty array
-- `POST /api/users` — create with `UpsertUserRequest` body
+- `POST /api/users` with `X-XSRF-TOKEN` — create with `UpsertUserRequest` body
 - `POST /api/users` with empty name — expect `400`
-- `PUT /api/users/{userId}` — update user
+- `PUT /api/users/{userId}` with `X-XSRF-TOKEN` — update user
 - `PUT /api/users/999999` — expect `404`
-- `DELETE /api/users/{userId}` — delete success
+- `DELETE /api/users/{userId}` with `X-XSRF-TOKEN` — delete success
 - `DELETE /api/users/999999` — expect `404`
-- `POST /api/auth/logout` — logs out last to end the authenticated session
+- `POST /api/auth/logout` with `X-XSRF-TOKEN` — logs out last to end the authenticated session
 
 ### `api-testing/auth.http`
 
-Ad-hoc REST Client smoke file dedicated to the auth API — **not part of the automated test suite**. Defines `baseUrl` (`http://localhost:8084`) and `username`/`password` via dotenv variables.
+Ad-hoc httpYac smoke file dedicated to the auth API — **not part of the automated test suite**. Defines `baseUrl` (`http://localhost:8084`) and `username`/`password` via dotenv variables.
 
 Requests present in the workspace:
 
-- `POST /api/auth/login` — establishes the session cookie for the REST Client cookie jar
+- `GET /api/auth/csrf` — issues `XSRF-TOKEN` and a post-request script exports `csrfToken` for later `X-XSRF-TOKEN` headers
+- `POST /api/auth/login` with `X-XSRF-TOKEN` — establishes the session cookie for the httpYac cookie jar
 - `GET /api/users` (before login, or with `@no-cookie-jar`) — expect `401` for a protected endpoint without a session
-- `POST /api/auth/login` with `@no-cookie-jar` — verify credentials without saving the session
+- `POST /api/auth/login` with `@no-cookie-jar` and CSRF header — verify credentials without saving the session
 - `POST /api/auth/login` with wrong password — expect `401`
 - `POST /api/auth/login` with blank fields — expect `400` validation error
+- `POST /api/auth/login` without CSRF — expect `403`
 - `GET /api/auth/me` — expect `200` with `username` and `role` while logged in
 - `GET /api/auth/me` with `@no-cookie-jar` — expect `401` without a session
-- `POST /api/auth/logout` — expect `200` while logged in
+- `POST /api/auth/logout` with `X-XSRF-TOKEN` — expect `200` while logged in
 - `POST /api/auth/logout` with `@no-cookie-jar` — expect `401` without a session
 
 ## Test Types Present

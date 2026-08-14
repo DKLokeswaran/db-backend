@@ -12,15 +12,15 @@
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/config/SecurityConfig.java` | `@Configuration`, `@EnableWebSecurity` | `passwordEncoder`, `authenticationManager`, `securityContextRepository`, `securityContextLogoutHandler`, `securityFilterChain` | Defines the `SecurityFilterChain`: CSRF and form login disabled, `POST /api/auth/login` is `permitAll()`, all other requests authenticated, unauthenticated requests get an `HttpStatusEntryPoint(401)`. |
+| `src/main/java/com/lokeswarandk/db_backend/config/SecurityConfig.java` | `@Configuration`, `@EnableWebSecurity` | `passwordEncoder`, `authenticationManager`, `securityContextRepository`, `securityContextLogoutHandler`, `cookieCsrfTokenRepository`, `csrfTokenRequestAttributeHandler`, `securityFilterChain` | Defines the `SecurityFilterChain`: cookie CSRF enabled, form login disabled, `POST /api/auth/login` and `GET /api/auth/csrf` are `permitAll()`, all other requests authenticated, unauthenticated requests get an `HttpStatusEntryPoint(401)`. |
 | `src/main/java/com/lokeswarandk/db_backend/security/DbUserDetailsService.java` | `@Service`, `UserDetailsService` | `loadUserByUsername` | Loads a `ControllerAccount` by username via `ControllerAccountRepository`; throws `UsernameNotFoundException` when missing. |
 
 ### Web Layer
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | Thin HTTP layer; accepts `UpsertUserRequest`, returns DTOs or delete message payload. All endpoints require an authenticated session. |
-| `src/main/java/com/lokeswarandk/db_backend/controller/AuthController.java` | REST controller | `login`, `logout`, `me` | `/api/auth`; authenticates via `AuthenticationManager`, persists the session via `SecurityContextRepository`, and logs out via `SecurityContextLogoutHandler`. |
+| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | Thin HTTP layer; accepts `UpsertUserRequest`, returns DTOs or delete message payload. All endpoints require an authenticated session; mutations also require CSRF. |
+| `src/main/java/com/lokeswarandk/db_backend/controller/AuthController.java` | REST controller | `csrf`, `login`, `logout`, `me` | `/api/auth`; CSRF bootstrap via `CookieCsrfTokenRepository`, authenticates via `AuthenticationManager`, persists the session via `SecurityContextRepository`, and logs out via `SecurityContextLogoutHandler` (also clears the CSRF cookie). |
 
 ### DTO Layer
 
@@ -85,12 +85,12 @@
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
 | `src/test/java/com/lokeswarandk/db_backend/DbBackendApplicationTests.java` | Spring Boot test | `contextLoads()` | Startup smoke test. |
-| `src/test/java/com/lokeswarandk/db_backend/controller/UserControllerTests.java` | Web slice test | CRUD and search endpoint tests | `@WebMvcTest` with mocked `UserService` and `DbUserDetailsService`; imports `SecurityConfig` and runs under `@WithMockUser`. |
-| `src/test/java/com/lokeswarandk/db_backend/controller/AuthControllerTests.java` | Web slice test | login/logout/me endpoint tests | `@WebMvcTest(AuthController.class)` with mocked `AuthenticationManager`; imports `SecurityConfig`. |
+| `src/test/java/com/lokeswarandk/db_backend/controller/UserControllerTests.java` | Web slice test | CRUD and search endpoint tests | `@WebMvcTest` with mocked `UserService` and `DbUserDetailsService`; imports `SecurityConfig` and runs under `@WithMockUser`; mutating requests use `.with(csrf())`. |
+| `src/test/java/com/lokeswarandk/db_backend/controller/AuthControllerTests.java` | Web slice test | csrf/login/logout/me endpoint tests | `@WebMvcTest(AuthController.class)` with mocked `AuthenticationManager`; imports `SecurityConfig`; POSTs use `.with(csrf())`; covers CSRF cookie issue/clear and missing-CSRF `403`. |
 | `src/test/java/com/lokeswarandk/db_backend/service/UserServiceTests.java` | Unit test | service method tests | Mockito-based; no Spring context. |
 | `src/test/resources/application.yml` | Test config | H2 datasource settings | In-memory PostgreSQL-compatible test DB. |
-| `api-testing/user.http` | REST Client file | N/A | Ad-hoc manual smoke collection with happy and error paths (not part of the automated test suite); logs in via `POST /api/auth/login` first and logs out last. Uses anonymized placeholder data. |
-| `api-testing/auth.http` | REST Client file | N/A | Ad-hoc manual smoke collection for login, logout, and `me`, including invalid-credentials, blank-field, and no-session cases. |
+| `api-testing/user.http` | REST Client file | N/A | Ad-hoc manual smoke collection with happy and error paths (not part of the automated test suite); bootstraps CSRF, logs in, then exercises user APIs and logs out. Uses anonymized placeholder data. |
+| `api-testing/auth.http` | REST Client file | N/A | Ad-hoc manual smoke collection for CSRF bootstrap, login, logout, and `me`, including invalid-credentials, blank-field, missing-CSRF, and no-session cases. |
 
 ## File-by-File Details
 
@@ -111,7 +111,9 @@
   - `authenticationManager(AuthenticationConfiguration configuration)`: exposes the default `AuthenticationManager` as a bean
   - `securityContextRepository()`: `HttpSessionSecurityContextRepository`
   - `securityContextLogoutHandler()`: `SecurityContextLogoutHandler`
-  - `securityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository)`: disables CSRF and form login, wires the session-based `SecurityContextRepository`, sets `HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)` for unauthenticated requests, permits `POST /api/auth/login`, and requires authentication for every other request
+  - `cookieCsrfTokenRepository()`: `CookieCsrfTokenRepository.withHttpOnlyFalse()` with SameSite=Lax
+  - `csrfTokenRequestAttributeHandler()`: plain header resolver for `X-XSRF-TOKEN`
+  - `securityFilterChain(...)`: enables cookie CSRF with the beans above, disables form login, wires the session-based `SecurityContextRepository`, sets `HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)` for unauthenticated requests, permits `POST /api/auth/login` and `GET /api/auth/csrf`, and requires authentication for every other request
 
 ### `DbUserDetailsService`
 
@@ -139,10 +141,11 @@
 - Package: `com.lokeswarandk.db_backend.controller`
 - Class type: REST controller
 - Annotation: `@RestController`, `@RequestMapping("/api/auth")`
-- Injected dependencies: `AuthenticationManager`, `SecurityContextRepository`, `SecurityContextLogoutHandler`
+- Injected dependencies: `AuthenticationManager`, `SecurityContextRepository`, `SecurityContextLogoutHandler`, `CookieCsrfTokenRepository`
 - Public methods:
+  - `csrf(CsrfToken csrfToken, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: writes the `XSRF-TOKEN` cookie via `saveToken`; returns `204 No Content`
   - `login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: authenticates via `AuthenticationManager`, persists the `SecurityContext`, returns `CurrentUserResponse`
-  - `logout(Authentication authentication, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: invalidates the session via `SecurityContextLogoutHandler`; returns a message payload
+  - `logout(Authentication authentication, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: invalidates the session via `SecurityContextLogoutHandler`, clears the CSRF cookie with `saveToken(null, ...)`, returns a message payload
   - `me(Authentication authentication)`: returns `CurrentUserResponse` for the current session
 - Private helper: `toCurrentUserResponse(Authentication)` builds the response and strips the `ROLE_` prefix from the first granted authority
 

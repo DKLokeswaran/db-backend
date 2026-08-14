@@ -4,10 +4,11 @@
 
 Authentication is session-cookie based, backed by Spring Security (`spring-boot-starter-security`).
 
-- `SecurityConfig` (`@EnableWebSecurity`) defines the `SecurityFilterChain`. Only `POST /api/auth/login` is `permitAll()`; every other request must be authenticated.
-- `AuthController` (`/api/auth`) exposes `POST /login`, `POST /logout`, and `GET /me`.
-- `POST /api/auth/login` authenticates a `UsernamePasswordAuthenticationToken` through the `AuthenticationManager`, stores the resulting `Authentication` in a new `SecurityContext`, and persists it via `SecurityContextRepository` (`HttpSessionSecurityContextRepository`). The container sets the `JSESSIONID` cookie on the response.
-- `POST /api/auth/logout` invalidates the session through `SecurityContextLogoutHandler`.
+- `SecurityConfig` (`@EnableWebSecurity`) defines the `SecurityFilterChain`. `POST /api/auth/login` and `GET /api/auth/csrf` are `permitAll()`; every other request must be authenticated.
+- `AuthController` (`/api/auth`) exposes `GET /csrf`, `POST /login`, `POST /logout`, and `GET /me`.
+- `GET /api/auth/csrf` materializes a CSRF token and writes the readable `XSRF-TOKEN` cookie via `CookieCsrfTokenRepository.saveToken` (`204 No Content`).
+- `POST /api/auth/login` authenticates a `UsernamePasswordAuthenticationToken` through the `AuthenticationManager`, stores the resulting `Authentication` in a new `SecurityContext`, and persists it via `SecurityContextRepository` (`HttpSessionSecurityContextRepository`). The container sets the `JSESSIONID` cookie on the response. Login is a state-changing request and requires a valid CSRF header.
+- `POST /api/auth/logout` invalidates the session through `SecurityContextLogoutHandler`, then clears the CSRF cookie with `cookieCsrfTokenRepository.saveToken(null, ...)`.
 - `GET /api/auth/me` returns the current `CurrentUserResponse` (`username`, `role`) for an authenticated session.
 - `DbUserDetailsService` (`UserDetailsService`) loads credentials by username via `ControllerAccountRepository.findByUsername`, throwing `UsernameNotFoundException` when no account matches.
 - `ControllerAccount` (`@Table("controllers")`) implements `UserDetails` directly — its `enabled`, `accountNonExpired`, `accountNonLocked`, and `credentialsNonExpired` flags come straight from the `controllers` table row.
@@ -18,7 +19,16 @@ Authentication is session-cookie based, backed by Spring Security (`spring-boot-
 
 - `ControllerAccount.getAuthorities()` grants a single `SimpleGrantedAuthority` of `ROLE_{role}`, where `role` is the raw column value on the `controllers` table (for example `ROLE_ADMIN`).
 - `AuthController` strips the `ROLE_` prefix before returning the role in `CurrentUserResponse`.
-- Authorization is currently all-or-nothing: `SecurityConfig` requires authentication for any request other than login, but there is no per-role or per-endpoint method-security (`@PreAuthorize`, `@Secured`) yet — any authenticated controller account can call any protected endpoint, including `/api/users/**`.
+- Authorization is currently all-or-nothing: `SecurityConfig` requires authentication for any request other than login and CSRF bootstrap, but there is no per-role or per-endpoint method-security (`@PreAuthorize`, `@Secured`) yet — any authenticated controller account can call any protected endpoint, including `/api/users/**`.
+
+## Session and CSRF cookies
+
+| Cookie | HttpOnly | SameSite | Role |
+| --- | --- | --- | --- |
+| `JSESSIONID` | yes (`server.servlet.session.cookie.http-only: true`) | `lax` (`application.yml`) | Authenticated HTTP session |
+| `XSRF-TOKEN` | no (`CookieCsrfTokenRepository.withHttpOnlyFalse()`) | `Lax` (cookie customizer) | CSRF secret for SPA cookie-to-header |
+
+`Secure` is not forced in config so local HTTP via the Vite proxy continues to work.
 
 ## CORS and Security Headers
 
@@ -52,15 +62,23 @@ The committed repository uses Spring Data JDBC repositories rather than handwrit
 
 ## CSRF, Rate Limiting, and Similar Controls
 
-CSRF protection is explicitly disabled in `SecurityConfig` (`csrf(csrf -> csrf.disable())`), so no CSRF tokens are issued or required. That is a known gap: the SPA already uses the session cookie (`JSESSIONID`) for state-changing calls such as create, update, and delete on `/api/users`. Until CSRF (or another cross-site request defense) is added, treat browser-session mutations as unprotected against CSRF. No rate limiting is present in HEAD.
+CSRF is enabled with Spring’s cookie-to-header SPA pattern:
+
+- `CookieCsrfTokenRepository` (bean) stores the expected token in the `XSRF-TOKEN` cookie (not in the HTTP session).
+- `CsrfTokenRequestAttributeHandler` (bean) resolves the submitted value from the `X-XSRF-TOKEN` request header as the raw cookie value.
+- Spring’s `CsrfFilter` validates unsafe methods (`POST`, `PUT`, `PATCH`, `DELETE`); safe methods such as `GET` are not CSRF-checked.
+- Clients bootstrap with `GET /api/auth/csrf`, then send `X-XSRF-TOKEN` matching `XSRF-TOKEN` on mutations (including login and logout). Missing or mismatched CSRF yields `403` before the controller runs.
+- Logout clears the CSRF cookie so the secret does not outlive the session.
+
+No rate limiting is present.
 
 ## Security-Sensitive Dependencies
 
 - `org.postgresql:postgresql` for database connectivity
 - `org.springframework.boot:spring-boot-starter-web` for HTTP handling
 - `org.springframework.boot:spring-boot-starter-validation` for request validation
-- `org.springframework.boot:spring-boot-starter-security` for authentication, authorization, and the security filter chain
-- `org.springframework.security:spring-security-test` (test scope) for `@WithMockUser` and `SecurityMockMvcConfigurers.springSecurity()` in web slice tests
+- `org.springframework.boot:spring-boot-starter-security` for authentication, authorization, CSRF, and the security filter chain
+- `org.springframework.security:spring-security-test` (test scope) for `@WithMockUser`, `csrf()`, and `SecurityMockMvcConfigurers.springSecurity()` in web slice tests
 
 ## Operational Note
 

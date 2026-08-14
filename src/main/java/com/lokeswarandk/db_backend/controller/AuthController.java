@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,16 +34,29 @@ public class AuthController {
 
     private final SecurityContextLogoutHandler logoutHandler;
 
+    private final CookieCsrfTokenRepository cookieCsrfTokenRepository;
+
     private final SecurityContextHolderStrategy securityContextHolderStrategy =
             SecurityContextHolder.getContextHolderStrategy();
 
     public AuthController(
             AuthenticationManager authenticationManager,
             SecurityContextRepository securityContextRepository,
-            SecurityContextLogoutHandler logoutHandler) {
+            SecurityContextLogoutHandler logoutHandler,
+            CookieCsrfTokenRepository cookieCsrfTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.logoutHandler = logoutHandler;
+        this.cookieCsrfTokenRepository = cookieCsrfTokenRepository;
+    }
+
+    @GetMapping("/csrf")
+    public ResponseEntity<Void> csrf(
+            CsrfToken csrfToken, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        // Explicit save writes the XSRF-TOKEN cookie for the SPA (deferred CSRF does not
+        // reliably Set-Cookie until the token is materialized via saveToken/getToken).
+        cookieCsrfTokenRepository.saveToken(csrfToken, httpRequest, httpResponse);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/login")
@@ -68,6 +83,7 @@ public class AuthController {
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         logoutHandler.logout(httpRequest, httpResponse, authentication);
+        cookieCsrfTokenRepository.saveToken(null, httpRequest, httpResponse);
 
         return ResponseEntity.ok(ApiResponseBuilder.messagePayload("Logout successful"));
     }

@@ -414,7 +414,8 @@ This project expects respectful, inclusive collaboration. Be constructive in rev
 ## Security
 
 - **Do not commit** `.env` files, database passwords, or API keys.
-- The API requires a session cookie for every endpoint except `POST /api/auth/login`; passwords are BCrypt-hashed, but there is no per-role authorization, no rate limiting, and CSRF protection is explicitly disabled — do not expose an unprotected instance to the public internet without further hardening.
+- The API requires a session cookie for every endpoint except `POST /api/auth/login` and `GET /api/auth/csrf`. Passwords are BCrypt-hashed. Cookie CSRF is enabled (`XSRF-TOKEN` + `X-XSRF-TOKEN`); there is still no per-role authorization or rate limiting — do not expose an instance to the public internet without TLS and further hardening.
+- See `docs/security.md` for CSRF details.
 - Report vulnerabilities privately to the repository maintainer rather than opening a public issue with exploit details.
 
 ---
