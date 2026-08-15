@@ -8,11 +8,19 @@
 | --- | --- | --- | --- |
 | `src/main/java/com/lokeswarandk/db_backend/DbBackendApplication.java` | Boot application | `main(String[] args)` | Standard `@SpringBootApplication` entry point. |
 
+### Security Layer
+
+| Path | Type | Public surface | Notes |
+| --- | --- | --- | --- |
+| `src/main/java/com/lokeswarandk/db_backend/config/SecurityConfig.java` | `@Configuration`, `@EnableWebSecurity` | `passwordEncoder`, `authenticationManager`, `securityContextRepository`, `securityContextLogoutHandler`, `cookieCsrfTokenRepository`, `csrfTokenRequestAttributeHandler`, `securityFilterChain` | Defines the `SecurityFilterChain`: cookie CSRF enabled, form login disabled, `POST /api/auth/login` and `GET /api/auth/csrf` are `permitAll()`, all other requests authenticated, unauthenticated requests get an `HttpStatusEntryPoint(401)`. |
+| `src/main/java/com/lokeswarandk/db_backend/security/DbUserDetailsService.java` | `@Service`, `UserDetailsService` | `loadUserByUsername` | Loads a `ControllerAccount` by username via `ControllerAccountRepository`; throws `UsernameNotFoundException` when missing. |
+
 ### Web Layer
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | Thin HTTP layer; accepts `UpsertUserRequest`, returns DTOs or delete message payload. |
+| `src/main/java/com/lokeswarandk/db_backend/controller/UserController.java` | REST controller | `addUser`, `getUser`, `listUsers`, `searchMobileByPrefix`, `updateUser`, `deleteUser` | Thin HTTP layer; accepts `UpsertUserRequest`, returns DTOs or delete message payload. All endpoints require an authenticated session; mutations also require CSRF. |
+| `src/main/java/com/lokeswarandk/db_backend/controller/AuthController.java` | REST controller | `csrf`, `login`, `logout`, `me` | `/api/auth`; CSRF bootstrap via `CookieCsrfTokenRepository`, authenticates via `AuthenticationManager`, persists the session via `SecurityContextRepository`, and logs out via `SecurityContextLogoutHandler` (also clears the CSRF cookie). |
 
 ### DTO Layer
 
@@ -21,6 +29,8 @@
 | `src/main/java/com/lokeswarandk/db_backend/dto/request/UpsertUserRequest.java` | Request DTO | getters/setters for user fields | Jakarta validation for create and update requests. |
 | `src/main/java/com/lokeswarandk/db_backend/dto/response/UserResponse.java` | Response DTO | getters/setters for user fields plus `id` | Client-facing user shape for CRUD and mobile filter. |
 | `src/main/java/com/lokeswarandk/db_backend/dto/response/MobilePrefixSearchResponse.java` | Response DTO | `mobileNos` | Wraps distinct mobile numbers from prefix search. |
+| `src/main/java/com/lokeswarandk/db_backend/dto/request/LoginRequest.java` | Request DTO | `username`, `password` | Jakarta validation (`@NotBlank`) for `POST /api/auth/login`. |
+| `src/main/java/com/lokeswarandk/db_backend/dto/response/CurrentUserResponse.java` | Response DTO | `username`, `role` | Returned by login and `GET /api/auth/me`; `role` has the `ROLE_` prefix stripped. |
 
 ### Mapping Layer
 
@@ -45,7 +55,7 @@
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
-| `src/main/java/com/lokeswarandk/db_backend/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` | `handleResourceNotFoundException`, `handleIllegalArgumentException`, `handleValidationException`, `handleGenericException` | Centralizes not-found, bad-request, validation, and unexpected error responses with SLF4J logging. |
+| `src/main/java/com/lokeswarandk/db_backend/exception/GlobalExceptionHandler.java` | `@RestControllerAdvice` | `handleResourceNotFoundException`, `handleIllegalArgumentException`, `handleAuthenticationException`, `handleValidationException`, `handleGenericException` | Centralizes not-found, bad-request, authentication, validation, and unexpected error responses with SLF4J logging. `handleAuthenticationException` returns a fixed `Invalid username or password` message regardless of cause. |
 | `src/main/java/com/lokeswarandk/db_backend/exception/ResourceNotFoundException.java` | Runtime exception | `ResourceNotFoundException`, `getError`, `forResourceWithId` | Domain not-found signal for services; maps to 404 via the global handler. |
 
 ### Persistence
@@ -53,12 +63,14 @@
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
 | `src/main/java/com/lokeswarandk/db_backend/repository/UserRepository.java` | Spring Data repository | `findDistinctMobileNosByPrefix`, `findByMobileNo`, inherited `CrudRepository` methods | CRUD plus mobile prefix and exact-mobile queries. |
+| `src/main/java/com/lokeswarandk/db_backend/repository/ControllerAccountRepository.java` | Spring Data repository | `findByUsername`, inherited `CrudRepository` methods | Used by `DbUserDetailsService` for authentication lookups. |
 
 ### Domain Model
 
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
 | `src/main/java/com/lokeswarandk/db_backend/model/User.java` | Entity | getters/setters for all fields | `@Table("user")`. |
+| `src/main/java/com/lokeswarandk/db_backend/model/ControllerAccount.java` | Entity, `UserDetails` | getters/setters for all fields, `getAuthorities` | `@Table("controllers")`; implements `UserDetails` directly for Spring Security. |
 | `src/main/java/com/lokeswarandk/db_backend/model/Event.java` | Entity | getters/setters for all fields | `@Table("event")`. |
 | `src/main/java/com/lokeswarandk/db_backend/model/OfferingType.java` | Entity | getters/setters for all fields | `@Table("offering_type")`. |
 | `src/main/java/com/lokeswarandk/db_backend/model/PaymentMode.java` | Entity | getters/setters for all fields | `@Table("payment_mode")`. |
@@ -73,10 +85,12 @@
 | Path | Type | Public surface | Notes |
 | --- | --- | --- | --- |
 | `src/test/java/com/lokeswarandk/db_backend/DbBackendApplicationTests.java` | Spring Boot test | `contextLoads()` | Startup smoke test. |
-| `src/test/java/com/lokeswarandk/db_backend/controller/UserControllerTests.java` | Web slice test | CRUD and search endpoint tests | `@WebMvcTest` with mocked `UserService`. |
+| `src/test/java/com/lokeswarandk/db_backend/controller/UserControllerTests.java` | Web slice test | CRUD and search endpoint tests | `@WebMvcTest` with mocked `UserService` and `DbUserDetailsService`; imports `SecurityConfig` and runs under `@WithMockUser`; mutating requests use `.with(csrf())`. |
+| `src/test/java/com/lokeswarandk/db_backend/controller/AuthControllerTests.java` | Web slice test | csrf/login/logout/me endpoint tests | `@WebMvcTest(AuthController.class)` with mocked `AuthenticationManager`; imports `SecurityConfig`; POSTs use `.with(csrf())`; covers CSRF cookie issue/clear and missing-CSRF `403`. |
 | `src/test/java/com/lokeswarandk/db_backend/service/UserServiceTests.java` | Unit test | service method tests | Mockito-based; no Spring context. |
 | `src/test/resources/application.yml` | Test config | H2 datasource settings | In-memory PostgreSQL-compatible test DB. |
-| `api-testing/user.http` | REST Client file | N/A | Ad-hoc manual smoke collection with happy and error paths (not part of the automated test suite). Uses anonymized placeholder data. |
+| `api-testing/user.http` | REST Client file | N/A | Ad-hoc manual smoke collection with happy and error paths (not part of the automated test suite); bootstraps CSRF, logs in, then exercises user APIs and logs out. Uses anonymized placeholder data. |
+| `api-testing/auth.http` | REST Client file | N/A | Ad-hoc manual smoke collection for CSRF bootstrap, login, logout, and `me`, including invalid-credentials, blank-field, missing-CSRF, and no-session cases. |
 
 ## File-by-File Details
 
@@ -87,6 +101,26 @@
 - Annotations: `@SpringBootApplication`
 - Public method: `main(String[] args)` returns `void`
 - Purpose: starts the Spring Boot application
+
+### `SecurityConfig`
+
+- Package: `com.lokeswarandk.db_backend.config`
+- Class type: `@Configuration`, `@EnableWebSecurity`
+- Public bean methods:
+  - `passwordEncoder()`: `BCryptPasswordEncoder`
+  - `authenticationManager(AuthenticationConfiguration configuration)`: exposes the default `AuthenticationManager` as a bean
+  - `securityContextRepository()`: `HttpSessionSecurityContextRepository`
+  - `securityContextLogoutHandler()`: `SecurityContextLogoutHandler`
+  - `cookieCsrfTokenRepository()`: `CookieCsrfTokenRepository.withHttpOnlyFalse()` with SameSite=Lax
+  - `csrfTokenRequestAttributeHandler()`: plain header resolver for `X-XSRF-TOKEN`
+  - `securityFilterChain(...)`: enables cookie CSRF with the beans above, disables form login, wires the session-based `SecurityContextRepository`, sets `HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)` for unauthenticated requests, permits `POST /api/auth/login` and `GET /api/auth/csrf`, and requires authentication for every other request
+
+### `DbUserDetailsService`
+
+- Package: `com.lokeswarandk.db_backend.security`
+- Class type: `@Service`, implements `UserDetailsService`
+- Injected dependency: `ControllerAccountRepository`
+- Public method: `loadUserByUsername(String username)` — returns the matching `ControllerAccount` or throws `UsernameNotFoundException`
 
 ### `UserController`
 
@@ -101,6 +135,19 @@
   - `searchMobileByPrefix(String prefix, Integer limit)`: GET `MobilePrefixSearchResponse`
   - `updateUser(Long id, UpsertUserRequest request)`: PUT update; returns `UserResponse`
   - `deleteUser(Long id)`: DELETE; service throws `ResourceNotFoundException` when missing
+
+### `AuthController`
+
+- Package: `com.lokeswarandk.db_backend.controller`
+- Class type: REST controller
+- Annotation: `@RestController`, `@RequestMapping("/api/auth")`
+- Injected dependencies: `AuthenticationManager`, `SecurityContextRepository`, `SecurityContextLogoutHandler`, `CookieCsrfTokenRepository`
+- Public methods:
+  - `csrf(CsrfToken csrfToken, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: writes the `XSRF-TOKEN` cookie via `saveToken`; returns `204 No Content`
+  - `login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: authenticates via `AuthenticationManager`, persists the `SecurityContext`, returns `CurrentUserResponse`
+  - `logout(Authentication authentication, HttpServletRequest httpRequest, HttpServletResponse httpResponse)`: invalidates the session via `SecurityContextLogoutHandler`, clears the CSRF cookie with `saveToken(null, ...)`, returns a message payload
+  - `me(Authentication authentication)`: returns `CurrentUserResponse` for the current session
+- Private helper: `toCurrentUserResponse(Authentication)` builds the response and strips the `ROLE_` prefix from the first granted authority
 
 ### `UserService`
 
@@ -142,6 +189,18 @@
 
 - Package: `com.lokeswarandk.db_backend.dto.response`
 - Fields: `mobileNos` (`List<String>`)
+
+### `LoginRequest`
+
+- Package: `com.lokeswarandk.db_backend.dto.request`
+- Fields: `username`, `password`
+- Constraints: `@NotBlank` on both fields (`"Username is required"`, `"Password is required"`)
+
+### `CurrentUserResponse`
+
+- Package: `com.lokeswarandk.db_backend.dto.response`
+- Fields: `username`, `role`
+- Constructors: no-arg (for JSON deserialization) and `(String username, String role)`
 
 ### `StringUtils`
 
@@ -196,6 +255,16 @@
   - `findByMobileNo(String mobileNo)`: derived query for exact mobile match
   - inherited CRUD methods from `CrudRepository`
 
+### `ControllerAccountRepository`
+
+- Package: `com.lokeswarandk.db_backend.repository`
+- Class type: repository interface
+- Annotation: `@Repository`
+- Extends: `CrudRepository<ControllerAccount, Long>`
+- Public methods:
+  - `findByUsername(String username)`: derived query returning `Optional<ControllerAccount>`, used by `DbUserDetailsService`
+  - inherited CRUD methods from `CrudRepository`
+
 ### `User`
 
 - Package: `com.lokeswarandk.db_backend.model`
@@ -204,6 +273,16 @@
 - Fields: `id`, `name`, `mobileNo`, `addressLine`, `locality`, `state`, `country`, `pincode`, `createdAt`
 - Constraints: none in the workspace; validation lives on `UpsertUserRequest`
 - Public methods: standard getters and setters for each field
+
+### `ControllerAccount`
+
+- Package: `com.lokeswarandk.db_backend.model`
+- Class type: entity, implements `UserDetails`
+- Annotation: `@Table("controllers")`
+- Fields: `id`, `username`, `password`, `role`, `enabled`, `accountNonExpired`, `accountNonLocked`, `credentialsNonExpired`, `createdAt`
+- Constraints: none in the workspace; validation for login input lives on `LoginRequest`
+- Public methods: standard getters and setters, plus `UserDetails` overrides (`getUsername`, `getPassword`, `isEnabled`, `isAccountNonExpired`, `isAccountNonLocked`, `isCredentialsNonExpired`, `getAuthorities`)
+- `getAuthorities()` returns a single `SimpleGrantedAuthority("ROLE_" + role)`
 
 ### `Event`
 

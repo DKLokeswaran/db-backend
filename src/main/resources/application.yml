@@ -6,7 +6,12 @@ spring:
     username: ${DB_DATASOURCE_USERNAME}
     password: ${DB_DATASOURCE_PASSWORD}
 server:
-  port: 8081
+  port: 8084
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true
 
 logging:
   level:
@@ -14,3 +19,4 @@ logging:
     org.springframework.jdbc.core: TRACE
     org.springframework.jdbc.datasource: DEBUG
     org.springframework.jdbc.core.StatementCreatorUtils: TRACE
+    org.springframework.security: TRACE

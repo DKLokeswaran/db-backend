@@ -36,7 +36,7 @@ REST API service for the [Donation Management](https://github.com/DKLokeswaran/d
 
 ## About
 
-Donation Management Backend is a Spring Boot service that exposes HTTP APIs for managing user records and lays the groundwork for donation workflows. It is designed for temple administrators who need a reliable way to register devotees, look them up by mobile number, and (as the platform grows) record offerings, receipts, and payment transactions.
+Donation Management Backend is a Spring Boot service that exposes HTTP APIs for managing user records and lays the groundwork for donation workflows, secured behind session-based staff authentication. It is designed for temple administrators who need a reliable way to log in, register devotees, look them up by mobile number, and (as the platform grows) record offerings, receipts, and payment transactions.
 
 The codebase follows a layered monolith pattern and is intentionally small and readable so it can be adapted to adjacent use cases — community centers, cultural organizations, or any group that needs structured donor and contribution tracking.
 
@@ -44,9 +44,10 @@ The codebase follows a layered monolith pattern and is intentionally small and r
 
 ## Features
 
-- **User management** — Create, read, update, and delete user records with validated request bodies.
+- **Session authentication** — Staff/controller login via `POST /api/auth/login`, session-cookie-backed access, `POST /api/auth/logout`, and `GET /api/auth/me`, with BCrypt-hashed passwords and role-based authorities.
+- **User management** — Create, read, update, and delete user records with validated request bodies (requires an authenticated session).
 - **Mobile lookup** — List users by exact mobile number or search distinct mobile prefixes for typeahead UIs.
-- **Consistent API responses** — Standard success payloads and centralized error handling via `GlobalExceptionHandler`.
+- **Consistent API responses** — Standard success payloads and centralized error handling via `GlobalExceptionHandler`, including authentication failures.
 - **Domain model for donations** — Entities for events, offering types, payment modes, receipts, transactions, and transaction items (persistence layer in place; REST endpoints expand over time).
 - **PostgreSQL persistence** — Production datasource via environment variables; H2 in-memory database for tests.
 - **Developer tooling** — Maven Wrapper, Spotless formatting, HTTP request samples under `api-testing/`.
@@ -60,6 +61,7 @@ The codebase follows a layered monolith pattern and is intentionally small and r
 | Runtime | Java 17 |
 | Framework | Spring Boot 4.0.6 |
 | Web | Spring Web (REST) |
+| Security | Spring Security (session-cookie auth, BCrypt) |
 | Persistence | Spring Data JDBC |
 | Database | PostgreSQL (runtime), H2 (tests) |
 | Validation | Jakarta Bean Validation |
@@ -96,7 +98,7 @@ DB_DATASOURCE_USERNAME=your_username
 DB_DATASOURCE_PASSWORD=your_password
 ```
 
-Ensure the PostgreSQL database exists and that Spring Data JDBC can create or access the required tables for your schema.
+Ensure the PostgreSQL database exists and that Spring Data JDBC can create or access the required tables for your schema. Schema management (table creation) is not handled by this repository — the `controllers` table (backing `ControllerAccount`) must already exist with at least one BCrypt-hashed staff login before you can authenticate against the API.
 
 ### 3. Start the server
 
@@ -104,7 +106,7 @@ Ensure the PostgreSQL database exists and that Spring Data JDBC can create or ac
 ./scripts/run-local.sh
 ```
 
-The API listens on **port 8081** by default.
+The API listens on **port 8084** by default.
 
 Alternatively, export the variables manually and run Maven:
 
@@ -123,13 +125,17 @@ Run the test suite:
 ./mvnw test
 ```
 
-Try a sample request (with the server running):
+Log in first, then try a sample request (with the server running). Every `/api/users` endpoint requires an authenticated session, so save the session cookie from login and reuse it:
 
 ```bash
-curl http://localhost:8081/api/users
+curl -c cookies.txt -X POST http://localhost:8084/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_username", "password": "your_password"}'
+
+curl -b cookies.txt http://localhost:8084/api/users
 ```
 
-See `api-testing/user.http` for more examples compatible with REST Client extensions.
+See `api-testing/auth.http` and `api-testing/user.http` for more examples compatible with REST Client extensions.
 
 ---
 
@@ -144,8 +150,9 @@ See `api-testing/user.http` for more examples compatible with REST Client extens
 Application settings live in `src/main/resources/application.yml`:
 
 - Application name: `db-backend`
-- Server port: `8081`
+- Server port: `8084`
 - JDBC debug logging enabled for local development
+- Spring Security `TRACE` logging enabled for local development
 
 Never commit secrets. Use `.env` locally and your platform's secret manager in production.
 
@@ -153,12 +160,20 @@ Never commit secrets. Use `.env` locally and your platform's secret manager in p
 
 ## Usage
 
-With the backend running on `localhost:8081`, the frontend dev server proxies `/api` requests to this service. You can also call the API directly.
+With the backend running on `localhost:8084`, the frontend dev server proxies `/api` requests to this service. You can also call the API directly. Every `/api/users` request needs an authenticated session, so log in first and reuse the returned cookie.
+
+**Log in:**
+
+```bash
+curl -c cookies.txt -X POST http://localhost:8084/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_username", "password": "your_password"}'
+```
 
 **Create a user:**
 
 ```bash
-curl -X POST http://localhost:8081/api/users \
+curl -b cookies.txt -X POST http://localhost:8084/api/users \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Example Devotee",
@@ -174,7 +189,7 @@ curl -X POST http://localhost:8081/api/users \
 **Search mobile prefixes (typeahead):**
 
 ```bash
-curl "http://localhost:8081/api/users/search/mobile?prefix=98&limit=10"
+curl -b cookies.txt "http://localhost:8084/api/users/search/mobile?prefix=98&limit=10"
 ```
 
 Full request/response documentation: [docs/api-reference.md](docs/api-reference.md).
@@ -183,10 +198,13 @@ Full request/response documentation: [docs/api-reference.md](docs/api-reference.
 
 ## API Overview
 
-Base path: `/api/users`
+Base paths: `/api/auth` and `/api/users`. All `/api/users` endpoints require an authenticated session established via `/api/auth/login`.
 
 | Method | Path | Description |
 | --- | --- | --- |
+| `POST` | `/api/auth/login` | Log in and start a session |
+| `POST` | `/api/auth/logout` | Log out and end the session |
+| `GET` | `/api/auth/me` | Get the current authenticated user |
 | `POST` | `/api/users` | Create a user |
 | `GET` | `/api/users/{id}` | Get user by ID |
 | `GET` | `/api/users` | List all users, or filter with `?mobile=` |
@@ -201,23 +219,32 @@ Base path: `/api/users`
 Request flow:
 
 ```
-HTTP Client → UserController → UserService → UserMapper → UserRepository → PostgreSQL
+HTTP Client → SecurityFilterChain → UserController → UserService → UserMapper → UserRepository → PostgreSQL
+                    ↓                       ↓
+             AuthController          GlobalExceptionHandler / ApiResponseBuilder
                     ↓
-         GlobalExceptionHandler / ApiResponseBuilder
+     AuthenticationManager → DbUserDetailsService → ControllerAccountRepository
 ```
 
 ```mermaid
 flowchart LR
-  Client[HTTP client] --> Controller[UserController]
+  Client[HTTP client] --> SFC[SecurityFilterChain]
+  SFC --> AuthController[AuthController]
+  SFC --> Controller[UserController]
+  AuthController --> AM[AuthenticationManager]
+  AM --> DUDS[DbUserDetailsService]
+  DUDS --> CAR[ControllerAccountRepository]
   Controller --> Service[UserService]
   Service --> Repo[UserRepository]
   Service --> Mapper[UserMapper]
   Controller --> EH[GlobalExceptionHandler]
   Repo --> DB[(PostgreSQL)]
+  CAR --> DB
 ```
 
 Layer responsibilities:
 
+- **Security** — `SecurityConfig` enforces session-cookie authentication on every request except `POST /api/auth/login`; `AuthController` handles login/logout/current-user; `DbUserDetailsService` loads `ControllerAccount` credentials.
 - **Controller** — REST mapping, `@Valid` on request DTOs, no entity exposure at the boundary.
 - **Service** — Business orchestration and `ResourceNotFoundException` for missing records.
 - **Mapper** — Manual entity ↔ DTO conversion.
@@ -232,22 +259,24 @@ Detailed design: [docs/architecture.md](docs/architecture.md).
 
 ```
 db-backend/
-├── api-testing/          # HTTP samples (e.g. user.http)
+├── api-testing/          # HTTP samples (e.g. user.http, auth.http)
 ├── docs/                 # In-depth project documentation
 ├── scripts/
 │   └── run-local.sh      # Load .env and start Spring Boot
 ├── src/main/java/com/lokeswarandk/db_backend/
 │   ├── common/           # ApiResponseBuilder, StringUtils
-│   ├── controller/       # REST controllers
-│   ├── dto/              # Request and response DTOs
+│   ├── config/           # SecurityConfig (Spring Security filter chain and auth beans)
+│   ├── controller/       # REST controllers (UserController, AuthController)
+│   ├── dto/              # Request and response DTOs (incl. LoginRequest, CurrentUserResponse)
 │   ├── exception/        # GlobalExceptionHandler, domain exceptions
 │   ├── mapper/           # Entity ↔ DTO mappers
-│   ├── model/            # JDBC entities and enums
+│   ├── model/            # JDBC entities and enums (incl. ControllerAccount)
 │   ├── repository/       # Spring Data JDBC repositories
+│   ├── security/         # DbUserDetailsService
 │   └── service/          # Business logic
 ├── src/main/resources/
 │   └── application.yml
-└── src/test/             # Unit, slice, and context tests
+└── src/test/             # Unit, slice, and context tests (incl. AuthControllerTests)
 ```
 
 ---
@@ -284,7 +313,7 @@ Conventions: [docs/conventions.md](docs/conventions.md).
 
 ### Manual API testing
 
-Use `api-testing/user.http` with IntelliJ HTTP Client, VS Code REST Client, or similar.
+Use `api-testing/user.http` and `api-testing/auth.http` with IntelliJ HTTP Client, VS Code REST Client, or similar. `user.http` logs in first so its requests carry an authenticated session; `auth.http` covers login, logout, and `me` in isolation, including invalid-credential and no-session cases.
 
 ---
 
@@ -297,7 +326,8 @@ Use `api-testing/user.http` with IntelliJ HTTP Client, VS Code REST Client, or s
 | Test class | Scope |
 | --- | --- |
 | `DbBackendApplicationTests` | Spring context smoke test |
-| `UserControllerTests` | `@WebMvcTest` slice for `/api/users` |
+| `UserControllerTests` | `@WebMvcTest` slice for `/api/users` (secured; runs as `@WithMockUser`) |
+| `AuthControllerTests` | `@WebMvcTest` slice for `/api/auth` (login, logout, me) |
 | `UserServiceTests` | Unit tests with mocked repository |
 
 Tests use an in-memory H2 database configured in `src/test/resources/application.yml` — no live PostgreSQL required for CI or local test runs.
@@ -353,7 +383,7 @@ Operational notes: [docs/build-and-deploy.md](docs/build-and-deploy.md).
 
 - REST APIs for events, offerings, receipts, and transactions
 - Database migration tooling (Flyway or Liquibase)
-- Authentication and role-based access for temple staff
+- Session authentication for temple staff (`ControllerAccount` login/logout/me) is in place; per-role authorization (beyond a single `ROLE_{role}` authority per account) and finer-grained access control for temple staff are still to come
 - Docker image and compose stack for local and production deployment
 - CI pipeline (build, test, Spotless check)
 
@@ -384,7 +414,8 @@ This project expects respectful, inclusive collaboration. Be constructive in rev
 ## Security
 
 - **Do not commit** `.env` files, database passwords, or API keys.
-- The committed API has **no authentication layer** yet; do not expose an unprotected instance to the public internet.
+- The API requires a session cookie for every endpoint except `POST /api/auth/login` and `GET /api/auth/csrf`. Passwords are BCrypt-hashed. Cookie CSRF is enabled (`XSRF-TOKEN` + `X-XSRF-TOKEN`); there is still no per-role authorization or rate limiting — do not expose an instance to the public internet without TLS and further hardening.
+- See `docs/security.md` for CSRF details.
 - Report vulnerabilities privately to the repository maintainer rather than opening a public issue with exploit details.
 
 ---

@@ -20,6 +20,22 @@ The committed code uses Spring Data JDBC entities instead of migration files or 
 | `pincode` | `String` | no | validated on `UpsertUserRequest` |
 | `createdAt` | `LocalDateTime` | yes | set by service on create when absent |
 
+### `controllers`
+
+Staff/administrator login accounts, distinct from the donor-facing `user` table. Backed by `ControllerAccount`, which implements `UserDetails` for Spring Security.
+
+| Column | Java type | Nullable | Constraints / notes |
+| --- | --- | --- | --- |
+| `id` | `Long` | yes | primary key, `@Id` |
+| `username` | `String` | no | unique login identifier; looked up by `ControllerAccountRepository.findByUsername` |
+| `password` | `String` | no | BCrypt password hash |
+| `role` | `String` | no | raw role value; exposed as authority `ROLE_{role}` |
+| `enabled` | `boolean` | no | `UserDetails.isEnabled()` |
+| `accountNonExpired` | `boolean` | no | `UserDetails.isAccountNonExpired()` |
+| `accountNonLocked` | `boolean` | no | `UserDetails.isAccountNonLocked()` |
+| `credentialsNonExpired` | `boolean` | no | `UserDetails.isCredentialsNonExpired()` |
+| `createdAt` | `LocalDateTime` | yes | optional |
+
 ### `event`
 
 | Column | Java type | Nullable | Constraints / notes |
@@ -107,6 +123,7 @@ Not found in committed history.
 
 - Spring Data JDBC is the persistence model.
 - `UserRepository` extends `CrudRepository` and adds `findDistinctMobileNosByPrefix` (custom SQL via `@Query`) and `findByMobileNo` (derived query).
+- `ControllerAccountRepository` extends `CrudRepository` and adds `findByUsername` (derived query), used by `DbUserDetailsService` for authentication lookups.
 - Mobile numbers are not unique in the domain; multiple `User` rows may share the same `mobileNo`.
 - No explicit transaction boundaries are annotated in committed history.
 

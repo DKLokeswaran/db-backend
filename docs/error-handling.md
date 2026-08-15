@@ -26,6 +26,17 @@ The `details` value is a field-name-to-message map.
 - `error` (`Bad request`)
 - `message` (exception message, such as `prefix is required` or `prefix must be at least 2 characters`)
 
+### Authentication failures
+
+`GlobalExceptionHandler.handleAuthenticationException` catches `AuthenticationException` (for example, `BadCredentialsException` thrown by the `AuthenticationManager` during `POST /api/auth/login`) and returns a fixed message regardless of the underlying cause:
+
+- `timestamp`
+- `status` (`401`)
+- `error` (`Unauthorized`)
+- `message` (always `Invalid username or password`, never the raw exception detail, to avoid leaking whether a username exists)
+
+This handler only applies to `AuthenticationException`s raised inside a controller method. Requests to protected endpoints that never reach a controller because they lack a valid session are rejected earlier in the filter chain by `SecurityConfig`'s `HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)`, which returns a bare `401` status that may have no JSON body at all — it does not pass through `GlobalExceptionHandler`.
+
 ### Not found failures
 
 `GlobalExceptionHandler.handleResourceNotFoundException` catches `ResourceNotFoundException` and returns:
@@ -60,6 +71,8 @@ The validation library in use is Jakarta Bean Validation. User API input constra
 
 | Class | Field | Constraint message |
 | --- | --- | --- |
+| `LoginRequest` | `username` | `Username is required` |
+| `LoginRequest` | `password` | `Password is required` |
 | `UpsertUserRequest` | `name` | `User name is required` |
 | `UpsertUserRequest` | `mobileNo` | `Mobile number is required` |
 | `UpsertUserRequest` | `addressLine` | `Address line is required` |
@@ -101,6 +114,17 @@ The validation library in use is Jakarta Bean Validation. User API input constra
 }
 ```
 
+### Authentication error
+
+```json
+{
+  "timestamp": "2026-05-31T12:34:56.789",
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "Invalid username or password"
+}
+```
+
 ### Generic error
 
 ```json
@@ -120,6 +144,7 @@ The validation library in use is Jakarta Bean Validation. User API input constra
 | --- | --- | --- |
 | `ResourceNotFoundException` | WARN (message only) | Full `error` + `message` envelope |
 | `IllegalArgumentException` | WARN (message only) | Exception message |
+| `AuthenticationException` | WARN (message only) | Fixed `Invalid username or password` message, not the raw exception detail |
 | `MethodArgumentNotValidException` | DEBUG (field map) | Validation `details` map |
 | Uncaught `Exception` | ERROR (stack trace) | Generic `An unexpected error occurred` |
 

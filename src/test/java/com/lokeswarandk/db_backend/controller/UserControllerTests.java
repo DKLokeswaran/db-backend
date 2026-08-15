@@ -4,6 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,23 +13,30 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.lokeswarandk.db_backend.config.SecurityConfig;
 import com.lokeswarandk.db_backend.dto.request.UpsertUserRequest;
 import com.lokeswarandk.db_backend.dto.response.MobilePrefixSearchResponse;
 import com.lokeswarandk.db_backend.dto.response.UserResponse;
 import com.lokeswarandk.db_backend.exception.GlobalExceptionHandler;
 import com.lokeswarandk.db_backend.exception.ResourceNotFoundException;
+import com.lokeswarandk.db_backend.security.DbUserDetailsService;
 import com.lokeswarandk.db_backend.service.UserService;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 @WebMvcTest(UserController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@WithMockUser
 class UserControllerTests {
 
     private static final String VALID_USER_JSON =
@@ -43,9 +52,18 @@ class UserControllerTests {
             }
             """;
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired private WebApplicationContext context;
 
     @MockitoBean private UserService userService;
+
+    @MockitoBean private DbUserDetailsService dbUserDetailsService;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+    }
 
     @Test
     void addUser_returns201WithUserResponse() throws Exception {
@@ -53,6 +71,7 @@ class UserControllerTests {
 
         mockMvc.perform(
                         post("/api/users")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(VALID_USER_JSON))
                 .andExpect(status().isCreated())
@@ -65,6 +84,7 @@ class UserControllerTests {
     void addUser_returns400WhenValidationFails() throws Exception {
         mockMvc.perform(
                         post("/api/users")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest())
@@ -121,6 +141,7 @@ class UserControllerTests {
 
         mockMvc.perform(
                         put("/api/users/1")
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(VALID_USER_JSON))
                 .andExpect(status().isOk())
@@ -129,7 +150,7 @@ class UserControllerTests {
 
     @Test
     void deleteUser_returns200WithMessagePayload() throws Exception {
-        mockMvc.perform(delete("/api/users/1"))
+        mockMvc.perform(delete("/api/users/1").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User deleted successfully"))
                 .andExpect(jsonPath("$.id").value(1));
